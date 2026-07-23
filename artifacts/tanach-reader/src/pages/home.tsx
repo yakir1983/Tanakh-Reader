@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, AArrowUp, AArrowDown } from 'lucide-react';
+import { Moon, Sun, AArrowUp, AArrowDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
@@ -69,8 +69,32 @@ export default function Home() {
     if (verse && verse >= 1 && verse <= verseCount) setSelectedVerse(verse);
   };
 
-  const currentBook = getBookByEnglish(selectedBook);
+  // Navigate to next verse (wrap to next chapter if needed)
+  const goNext = () => {
+    if (verseCount === 0) return;
+    if (selectedVerse < verseCount) {
+      setSelectedVerse(v => v + 1);
+    } else if (selectedChapter < chapterCount) {
+      setSelectedChapter(c => c + 1);
+      setSelectedVerse(1);
+    }
+  };
 
+  // Navigate to previous verse (wrap to previous chapter if needed)
+  const goPrev = () => {
+    if (selectedVerse > 1) {
+      setSelectedVerse(v => v - 1);
+    } else if (selectedChapter > 1) {
+      const prevChapterVerses = bookIndex ? bookIndex[selectedChapter - 2] || 1 : 1;
+      setSelectedChapter(c => c - 1);
+      setSelectedVerse(prevChapterVerses);
+    }
+  };
+
+  const isAtStart = selectedChapter === 1 && selectedVerse === 1;
+  const isAtEnd = selectedChapter === chapterCount && selectedVerse === verseCount;
+
+  const currentBook = getBookByEnglish(selectedBook);
   const increaseFontSize = () => setFontSize(f => Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX));
   const decreaseFontSize = () => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN));
 
@@ -78,8 +102,8 @@ export default function Home() {
     <div className="min-h-[100dvh] w-full bg-background text-foreground">
       <div className="container mx-auto py-8 sm:py-12 space-y-10">
 
-        {/* Header with title + controls */}
-        <header className="relative text-center space-y-2">
+        {/* Header */}
+        <header className="text-center space-y-2">
           <h1
             className="text-4xl sm:text-5xl font-bold text-primary"
             style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
@@ -91,9 +115,8 @@ export default function Home() {
             לימוד התנ״ך עם פירוש רש״י
           </p>
 
-          {/* Controls row: font size + dark mode */}
-          <div className="flex items-center justify-center gap-3 pt-3">
-            {/* Font size decrease */}
+          {/* Controls row */}
+          <div className="flex items-center justify-center gap-3 pt-3 flex-wrap">
             <button
               onClick={decreaseFontSize}
               disabled={fontSize <= FONT_SIZE_MIN}
@@ -105,7 +128,6 @@ export default function Home() {
               <span>A</span>
             </button>
 
-            {/* Font size increase */}
             <button
               onClick={increaseFontSize}
               disabled={fontSize >= FONT_SIZE_MAX}
@@ -117,17 +139,17 @@ export default function Home() {
               <span>A</span>
             </button>
 
-            {/* Divider */}
             <div className="w-px h-5 bg-border" />
 
-            {/* Dark mode toggle */}
             <button
               onClick={() => setIsDark(d => !d)}
               data-testid="button-dark-mode-toggle"
               title={isDark ? 'מצב יום' : 'מצב לילה'}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark
+                ? <Sun className="w-4 h-4" />
+                : <Moon className="w-4 h-4" />}
               <span dir="rtl">{isDark ? 'יום' : 'לילה'}</span>
             </button>
           </div>
@@ -150,15 +172,39 @@ export default function Home() {
           <VoiceSearchButton onReferenceDetected={handleVoiceReference} />
         </div>
 
-        {/* Verse display */}
-        <VerseDisplay
-          bookHebrew={currentBook?.hebrew || ''}
-          chapter={selectedChapter}
-          verse={selectedVerse}
-          verseText={verseText || ''}
-          isLoading={isLoadingVerse}
-          fontSize={fontSize}
-        />
+        {/* Verse display with prev/next arrows */}
+        <div className="relative">
+          {/* Prev arrow (RTL: right side = previous) */}
+          <button
+            onClick={goPrev}
+            disabled={isAtStart}
+            data-testid="button-prev-verse"
+            title="פסוק קודם"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full border-2 border-primary/40 bg-card text-primary flex items-center justify-center transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
+          >
+            <ChevronRight className="w-8 h-8" />
+          </button>
+
+          {/* Next arrow (RTL: left side = next) */}
+          <button
+            onClick={goNext}
+            disabled={isAtEnd}
+            data-testid="button-next-verse"
+            title="פסוק הבא"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full border-2 border-primary/40 bg-card text-primary flex items-center justify-center transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+
+          <VerseDisplay
+            bookHebrew={currentBook?.hebrew || ''}
+            chapter={selectedChapter}
+            verse={selectedVerse}
+            verseText={verseText || ''}
+            isLoading={isLoadingVerse}
+            fontSize={fontSize}
+          />
+        </div>
 
         {/* Rashi commentary */}
         {!isLoadingVerse && (

@@ -1,4 +1,6 @@
-// Convert an Arabic number to traditional Hebrew numeral with geresh/gershayim
+// Convert an Arabic number to traditional Hebrew numeral
+// Uses Hebrew punctuation geresh ׳ (U+05F3) and gershayim ״ (U+05F4)
+// so RTL rendering stays correct.
 // Special cases: 15 = טו (not יה), 16 = טז (not יו)
 const HEBREW_DIGITS: [number, string][] = [
   [400, 'ת'], [300, 'ש'], [200, 'ר'], [100, 'ק'],
@@ -19,7 +21,7 @@ export function toHebrewNumeral(num: number): string {
       n -= value;
     }
   }
-  // Single letter → add geresh ('), multiple → insert gershayim (") before last letter
-  if (result.length === 1) return result + "'";
-  return result.slice(0, -1) + '"' + result.slice(-1);
+  // Single letter → geresh ׳, multiple → gershayim ״ before last letter
+  if (result.length === 1) return result + '\u05F3'; // ׳
+  return result.slice(0, -1) + '\u05F4' + result.slice(-1); // ״
 }

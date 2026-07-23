@@ -194,49 +194,49 @@
   --elevate-1: rgba(255, 255, 255, 0.04);
   --elevate-2: rgba(255, 255, 255, 0.09);
 
-  --background: 0 0% 100%;
-  --foreground: 210 50% 18%;
-  --border: 204 60% 78%;
-  --card: 204 60% 96%;
-  --card-foreground: 210 50% 18%;
-  --card-border: 204 55% 82%;
-  --sidebar: 204 60% 96%;
-  --sidebar-foreground: 210 50% 18%;
-  --sidebar-border: 204 55% 82%;
-  --sidebar-primary: 200 85% 42%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 204 70% 88%;
-  --sidebar-accent-foreground: 210 50% 18%;
-  --sidebar-ring: 200 85% 42%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 210 50% 18%;
-  --popover-border: 204 60% 78%;
-  --primary: 200 85% 42%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 204 60% 88%;
-  --secondary-foreground: 210 50% 18%;
-  --muted: 204 50% 93%;
-  --muted-foreground: 210 30% 50%;
-  --accent: 204 70% 82%;
-  --accent-foreground: 210 50% 18%;
+  --background: 215 40% 8%;       /* Deep dark navy */
+  --foreground: 210 25% 90%;      /* Soft light cream */
+  --border: 215 30% 22%;
+  --card: 215 38% 13%;
+  --card-foreground: 210 25% 90%;
+  --card-border: 215 30% 22%;
+  --sidebar: 215 38% 13%;
+  --sidebar-foreground: 210 25% 90%;
+  --sidebar-border: 215 30% 22%;
+  --sidebar-primary: 200 80% 62%;  /* Lighter sky blue for dark bg */
+  --sidebar-primary-foreground: 215 40% 8%;
+  --sidebar-accent: 215 35% 20%;
+  --sidebar-accent-foreground: 210 25% 90%;
+  --sidebar-ring: 200 80% 62%;
+  --popover: 215 40% 10%;
+  --popover-foreground: 210 25% 90%;
+  --popover-border: 215 30% 22%;
+  --primary: 200 80% 62%;
+  --primary-foreground: 215 40% 8%;
+  --secondary: 215 35% 20%;
+  --secondary-foreground: 210 25% 90%;
+  --muted: 215 35% 16%;
+  --muted-foreground: 210 20% 58%;
+  --accent: 215 35% 20%;
+  --accent-foreground: 210 25% 90%;
   --destructive: 0 62% 50%;
   --destructive-foreground: 0 0% 100%;
-  --input: 204 60% 78%;
-  --ring: 200 85% 42%;
-  --chart-1: 200 85% 42%;
+  --input: 215 30% 22%;
+  --ring: 200 80% 62%;
+  --chart-1: 200 80% 62%;
   --chart-2: 210 70% 55%;
-  --chart-3: 195 80% 50%;
+  --chart-3: 195 75% 50%;
   --chart-4: 215 65% 60%;
   --chart-5: 205 75% 65%;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.1);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.15);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0px 25px 50px -12px hsl(0 0% 0% / 0.25);
+  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.3);
+  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.4);
+  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
+  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
+  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.3), 0px 2px 4px -1px hsl(0 0% 0% / 0.3);
+  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.3), 0px 4px 6px -1px hsl(0 0% 0% / 0.3);
+  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.3), 0px 8px 10px -1px hsl(0 0% 0% / 0.3);
+  --shadow-2xl: 0px 25px 50px -12px hsl(0 0% 0% / 0.5);
 }
 
 @layer base {
