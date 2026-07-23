@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { toHebrewNumeral } from '@/lib/hebrew-numerals';
 
 interface VerseDisplayProps {
   bookHebrew: string;
@@ -6,6 +7,7 @@ interface VerseDisplayProps {
   verse: number;
   verseText: string;
   isLoading?: boolean;
+  fontSize?: number;
 }
 
 export function VerseDisplay({ 
@@ -13,7 +15,8 @@ export function VerseDisplay({
   chapter, 
   verse, 
   verseText,
-  isLoading 
+  isLoading,
+  fontSize = 5,
 }: VerseDisplayProps) {
   return (
     <div className="w-full max-w-4xl mx-auto px-6">
@@ -45,13 +48,13 @@ export function VerseDisplay({
               dir="rtl"
               data-testid="text-verse-reference"
             >
-              {bookHebrew} • פרק {chapter} • פסוק {verse}
+              {bookHebrew} • פרק {toHebrewNumeral(chapter)} • פסוק {toHebrewNumeral(verse)}
             </div>
 
             {/* Verse text */}
             <div
-              className="text-center text-5xl sm:text-6xl md:text-7xl leading-relaxed font-normal text-foreground"
-              style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+              className="text-center leading-relaxed font-normal text-foreground transition-all duration-200"
+              style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${fontSize}rem` }}
               dir="rtl"
               data-testid="text-verse-content"
             >

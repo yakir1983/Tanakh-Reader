@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TANACH_BOOKS } from '@/lib/tanach-data';
+import { toHebrewNumeral } from '@/lib/hebrew-numerals';
 
 interface NavigationBarProps {
   selectedBook: string | null;
@@ -98,8 +99,9 @@ export function NavigationBar({
                 key={num} 
                 value={num.toString()}
                 className="text-base cursor-pointer"
+                dir="rtl"
               >
-                פרק {num}
+                פרק {toHebrewNumeral(num)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -125,8 +127,9 @@ export function NavigationBar({
                 key={num} 
                 value={num.toString()}
                 className="text-base cursor-pointer"
+                dir="rtl"
               >
-                פסוק {num}
+                פסוק {toHebrewNumeral(num)}
               </SelectItem>
             ))}
           </SelectContent>
