@@ -106,8 +106,8 @@ export async function getRashiCommentary(
     const response = await fetch(url);
     if (!response.ok) return null;
     const data: SefariaTextResponse = await response.json();
-    // Rashi: join ALL diburim; strip nikud to avoid rendering gibberish
-    const segments = flattenHe(data.he, true);
+    // Rashi: join ALL diburim for this verse; keep nikud for readability
+    const segments = flattenHe(data.he, false);
     if (segments.length === 0) return null;
     return segments.join('\n');
   } catch {
