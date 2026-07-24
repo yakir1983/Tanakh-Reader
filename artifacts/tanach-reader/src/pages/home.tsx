@@ -5,7 +5,7 @@ import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
-import { getBookIndex, getVerseText, getRashiCommentary } from '@/lib/sefaria-api';
+import { getBookIndex, getVerseText, getRashiDiburim } from '@/lib/sefaria-api';
 import { getBookByEnglish, getBookByHebrew } from '@/lib/tanach-data';
 
 const FONT_SIZE_MIN = 2.5;
@@ -46,9 +46,9 @@ export default function Home() {
     enabled: !!selectedBook && !!selectedChapter && !!selectedVerse,
   });
 
-  const { data: rashiText, isLoading: isLoadingRashi } = useQuery({
+  const { data: rashiDiburim, isLoading: isLoadingRashi } = useQuery({
     queryKey: ['rashi', selectedBook, selectedChapter, selectedVerse],
-    queryFn: () => getRashiCommentary(selectedBook, selectedChapter, selectedVerse),
+    queryFn: () => getRashiDiburim(selectedBook, selectedChapter, selectedVerse),
     enabled: !!selectedBook && !!selectedChapter && !!selectedVerse,
   });
 
@@ -176,7 +176,7 @@ export default function Home() {
         {/* ── Rashi commentary ─────────────────────────────────────── */}
         {!isLoadingVerse && (
           <RashiCommentary
-            commentary={rashiText ?? null}
+            diburim={rashiDiburim ?? []}
             isLoading={isLoadingRashi}
           />
         )}

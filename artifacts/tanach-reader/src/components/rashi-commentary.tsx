@@ -1,73 +1,94 @@
 import { motion } from 'framer-motion';
+import type { RashiDibur } from '@/lib/sefaria-api';
 
 interface RashiCommentaryProps {
-  commentary: string | null;
+  diburim: RashiDibur[];
   isLoading?: boolean;
 }
 
-export function RashiCommentary({ commentary, isLoading }: RashiCommentaryProps) {
+export function RashiCommentary({ diburim, isLoading }: RashiCommentaryProps) {
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto px-6 mt-16">
-        <div className="space-y-4">
-          <div className="h-8 w-32 bg-muted/30 rounded animate-pulse" />
-          <div className="h-32 w-full bg-muted/30 rounded animate-pulse" />
+      <div className="w-full max-w-4xl mx-auto px-4 mt-10">
+        <div className="rounded-xl border-2 border-primary/20 bg-card p-6 space-y-4">
+          <div className="h-6 w-28 bg-muted/40 rounded animate-pulse mr-auto" />
+          {[1, 2].map(i => (
+            <div key={i} className="space-y-2 pt-2">
+              <div className="h-5 w-32 bg-muted/40 rounded animate-pulse mr-auto" />
+              <div className="h-16 w-full bg-muted/30 rounded animate-pulse" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // Split joined diburim back into paragraphs for clean display
-  const paragraphs = commentary
-    ? commentary.split('\n').filter(p => p.trim())
-    : [];
-
   return (
     <motion.div
-      className="w-full max-w-4xl mx-auto px-6 mt-16 pb-16"
-      initial={{ opacity: 0, y: 30 }}
+      className="w-full max-w-4xl mx-auto px-4 mt-10 pb-4"
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
       data-testid="container-rashi-commentary"
     >
       <div
-        className="bg-primary/10 border-2 border-primary/30 rounded-lg p-8"
+        className="rounded-xl border-2 border-primary/25 bg-card overflow-hidden"
         style={{
           backgroundImage:
-            'linear-gradient(to bottom, hsl(var(--primary) / 0.05), hsl(var(--primary) / 0.15))',
+            'linear-gradient(160deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.10) 100%)',
         }}
       >
-        {/* Label */}
-        <h2
-          className="text-2xl font-bold text-primary mb-6 text-right"
-          dir="rtl"
-          data-testid="text-rashi-label"
-        >
-          פירוש רש״י
-        </h2>
+        {/* Section header */}
+        <div className="px-6 pt-5 pb-3 border-b border-primary/15">
+          <h2
+            className="text-xl font-bold text-primary text-right"
+            dir="rtl"
+            data-testid="text-rashi-label"
+          >
+            פירוש רש״י
+          </h2>
+        </div>
 
-        {/* Commentary */}
-        <div
-          dir="rtl"
-          className="text-right"
-          data-testid="text-rashi-content"
-          style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
-        >
-          {paragraphs.length > 0 ? (
-            <div className="space-y-4">
-              {paragraphs.map((para, i) => (
-                <p
-                  key={i}
-                  className="text-xl sm:text-2xl leading-loose text-foreground/95"
-                >
-                  {para}
-                </p>
-              ))}
-            </div>
+        {/* Diburim list */}
+        <div className="divide-y divide-primary/10" dir="rtl" data-testid="text-rashi-content">
+          {diburim.length > 0 ? (
+            diburim.map((dibur, i) => (
+              <motion.div
+                key={i}
+                className="px-6 py-5 text-right"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                {/* Dibur hamatchil — bold, slightly larger */}
+                {dibur.heading && (
+                  <p
+                    className="text-lg font-bold text-foreground mb-2 leading-snug"
+                    style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+                  >
+                    {dibur.heading}
+                  </p>
+                )}
+                {/* Commentary text with nikud */}
+                {dibur.commentary && (
+                  <p
+                    className="text-lg leading-loose text-foreground/90"
+                    style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+                  >
+                    {dibur.commentary}
+                  </p>
+                )}
+              </motion.div>
+            ))
           ) : (
-            <p className="text-xl text-muted-foreground">
-              אין פירוש רש״י לפסוק זה
-            </p>
+            <div className="px-6 py-8 text-right">
+              <p
+                className="text-lg text-muted-foreground"
+                style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+              >
+                אין פירוש רש״י לפסוק זה
+              </p>
+            </div>
           )}
         </div>
       </div>

@@ -17,11 +17,6 @@ interface SefariaTextResponse {
 
 // ── Text cleaning helpers ────────────────────────────────────────────────────
 
-/** Strip all HTML tags */
-function stripHtml(text: string): string {
-  return text.replace(/<[^>]*>/g, '');
-}
-
 /** Decode common HTML entities */
 function decodeEntities(text: string): string {
   return text
@@ -36,35 +31,78 @@ function decodeEntities(text: string): string {
     );
 }
 
-/**
- * Strip cantillation marks (U+0591–U+05AF) and stray BiDi/control chars.
- * Nikud (U+05B0–U+05C7) is kept by default; pass stripNikud=true for Rashi.
- */
-function cleanHebrewText(text: string, stripNikud = false): string {
-  let out = text
-    .replace(/[\u0591-\u05AF]/g, '')         // cantillation / trope
-    .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '') // BiDi / zero-width
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-
-  if (stripNikud) {
-    out = out.replace(/[\u05B0-\u05C7]/g, ''); // vowel points
-  }
-
-  return out;
+/** Strip all HTML tags */
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, '');
 }
 
 /**
- * Recursively flatten any depth of string arrays.
+ * Strip cantillation marks (U+0591–U+05AF) and stray BiDi/control chars.
+ * Nikud (U+05B0–U+05C7) is always preserved.
+ */
+function cleanHebrewText(text: string): string {
+  return text
+    .replace(/[\u0591-\u05AF]/g, '')                    // cantillation / trope
+    .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '') // BiDi / zero-width
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Recursively flatten any depth of string arrays into raw HTML strings.
+ * Does NOT strip HTML — callers decide what to do with markup.
+ */
+function flattenRaw(data: SefariaHe): string[] {
+  if (typeof data === 'string') {
+    const decoded = decodeEntities(data).trim();
+    return decoded ? [decoded] : [];
+  }
+  if (Array.isArray(data)) {
+    return data.flatMap(item => flattenRaw(item));
+  }
+  return [];
+}
+
+// ── Rashi dibur structure ────────────────────────────────────────────────────
+
+export interface RashiDibur {
+  /** The "dibur hamatchil" — the opening word(s) from the verse (unvocalised) */
+  heading: string;
+  /** Rashi's commentary on that word/phrase, with nikud */
+  commentary: string;
+}
+
+/**
+ * Parse a single Sefaria Rashi HTML string such as:
+ *   "<b>בראשית.</b> אָמַר רַבִּי יִצְחָק..."
+ * into a structured RashiDibur.
+ */
+function parseDibur(raw: string): RashiDibur | null {
+  // Extract text inside <b>...</b> as heading
+  const boldMatch = raw.match(/^<b>([\s\S]*?)<\/b>\s*/i);
+  if (boldMatch) {
+    const heading = cleanHebrewText(stripHtml(boldMatch[1])).replace(/[.:–\-]+$/, '').trim();
+    const rest = raw.slice(boldMatch[0].length);
+    const commentary = cleanHebrewText(stripHtml(rest));
+    if (heading || commentary) return { heading, commentary };
+    return null;
+  }
+  // No bold tag — treat whole segment as commentary with empty heading
+  const commentary = cleanHebrewText(stripHtml(raw));
+  return commentary ? { heading: '', commentary } : null;
+}
+
+/**
+ * Recursively flatten any depth of string arrays into raw HTML strings.
  * Handles verse (string[]) and Rashi (string[][]).
  */
-function flattenHe(data: SefariaHe, stripNikud = false): string[] {
+function flattenHe(data: SefariaHe): string[] {
   if (typeof data === 'string') {
-    const cleaned = cleanHebrewText(decodeEntities(stripHtml(data)), stripNikud);
+    const cleaned = cleanHebrewText(stripHtml(decodeEntities(data)));
     return cleaned ? [cleaned] : [];
   }
   if (Array.isArray(data)) {
-    return data.flatMap(item => flattenHe(item, stripNikud));
+    return data.flatMap(item => flattenHe(item));
   }
   return [];
 }
@@ -91,26 +129,33 @@ export async function getVerseText(
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch verse ${englishName} ${chapter}:${verse}`);
   const data: SefariaTextResponse = await response.json();
-  // Verse text: first non-empty segment, keep nikud
-  const segments = flattenHe(data.he, false);
+  const segments = flattenHe(data.he);
   return segments[0] ?? '';
 }
 
-export async function getRashiCommentary(
+/**
+ * Fetch Rashi commentary for a single verse and parse it into
+ * structured diburim (one per Rashi comment on that verse).
+ */
+export async function getRashiDiburim(
   englishName: string,
   chapter: number,
   verse: number
-): Promise<string | null> {
+): Promise<RashiDibur[]> {
   const url = `https://www.sefaria.org/api/texts/Rashi_on_${englishName}.${chapter}.${verse}?lang=he`;
   try {
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) return [];
     const data: SefariaTextResponse = await response.json();
-    // Rashi: join ALL diburim for this verse; keep nikud for readability
-    const segments = flattenHe(data.he, false);
-    if (segments.length === 0) return null;
-    return segments.join('\n');
+
+    // flattenRaw preserves <b> tags; parseDibur splits heading from commentary
+    const rawSegments = flattenRaw(data.he);
+    const diburim = rawSegments
+      .map(parseDibur)
+      .filter((d): d is RashiDibur => d !== null && (d.heading !== '' || d.commentary !== ''));
+
+    return diburim;
   } catch {
-    return null;
+    return [];
   }
 }
