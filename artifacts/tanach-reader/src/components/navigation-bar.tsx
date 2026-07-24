@@ -33,7 +33,8 @@ export function NavigationBar({
       {/* Book selector */}
       <div className="w-full sm:w-auto min-w-[200px]">
         <Select value={selectedBook || undefined} onValueChange={onBookChange}>
-          <SelectTrigger 
+          <SelectTrigger
+            dir="rtl"
             data-testid="select-book"
             className="h-14 text-lg bg-card border-border hover:bg-card/80 transition-colors"
           >
@@ -87,7 +88,8 @@ export function NavigationBar({
           onValueChange={(v) => onChapterChange(parseInt(v))}
           disabled={!selectedBook || chapterCount === 0}
         >
-          <SelectTrigger 
+          <SelectTrigger
+            dir="rtl"
             data-testid="select-chapter"
             className="h-14 text-lg bg-card border-border hover:bg-card/80 transition-colors disabled:opacity-50"
           >
@@ -115,7 +117,8 @@ export function NavigationBar({
           onValueChange={(v) => onVerseChange(parseInt(v))}
           disabled={!selectedChapter || verseCount === 0}
         >
-          <SelectTrigger 
+          <SelectTrigger
+            dir="rtl"
             data-testid="select-verse"
             className="h-14 text-lg bg-card border-border hover:bg-card/80 transition-colors disabled:opacity-50"
           >

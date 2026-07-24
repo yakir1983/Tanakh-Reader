@@ -20,7 +20,7 @@ export default function Home() {
   const [isDark, setIsDark] = useState(false);
   const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
 
-  // Sync dark mode class on document root
+  // Sync dark mode class on <html>
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -36,8 +36,9 @@ export default function Home() {
     staleTime: Infinity,
   });
 
-  const chapterCount = bookIndex?.length || 0;
-  const verseCount = selectedChapter && bookIndex ? bookIndex[selectedChapter - 1] || 0 : 0;
+  const chapterCount = bookIndex?.length ?? 0;
+  const verseCount =
+    selectedChapter && bookIndex ? bookIndex[selectedChapter - 1] ?? 0 : 0;
 
   const { data: verseText, isLoading: isLoadingVerse } = useQuery({
     queryKey: ['verse', selectedBook, selectedChapter, selectedVerse],
@@ -69,7 +70,6 @@ export default function Home() {
     if (verse && verse >= 1 && verse <= verseCount) setSelectedVerse(verse);
   };
 
-  // Navigate to next verse (wrap to next chapter if needed)
   const goNext = () => {
     if (verseCount === 0) return;
     if (selectedVerse < verseCount) {
@@ -80,12 +80,11 @@ export default function Home() {
     }
   };
 
-  // Navigate to previous verse (wrap to previous chapter if needed)
   const goPrev = () => {
     if (selectedVerse > 1) {
       setSelectedVerse(v => v - 1);
     } else if (selectedChapter > 1) {
-      const prevChapterVerses = bookIndex ? bookIndex[selectedChapter - 2] || 1 : 1;
+      const prevChapterVerses = bookIndex ? bookIndex[selectedChapter - 2] ?? 1 : 1;
       setSelectedChapter(c => c - 1);
       setSelectedVerse(prevChapterVerses);
     }
@@ -93,16 +92,13 @@ export default function Home() {
 
   const isAtStart = selectedChapter === 1 && selectedVerse === 1;
   const isAtEnd = selectedChapter === chapterCount && selectedVerse === verseCount;
-
   const currentBook = getBookByEnglish(selectedBook);
-  const increaseFontSize = () => setFontSize(f => Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX));
-  const decreaseFontSize = () => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN));
 
   return (
-    <div className="min-h-[100dvh] w-full bg-background text-foreground">
-      <div className="container mx-auto py-8 sm:py-12 space-y-10">
+    <div className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300">
+      <div className="container mx-auto py-8 sm:py-12 space-y-10 max-w-4xl">
 
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────── */}
         <header className="text-center space-y-2">
           <h1
             className="text-4xl sm:text-5xl font-bold text-primary"
@@ -115,28 +111,25 @@ export default function Home() {
             לימוד התנ״ך עם פירוש רש״י
           </p>
 
-          {/* Controls row */}
+          {/* Controls */}
           <div className="flex items-center justify-center gap-3 pt-3 flex-wrap">
             <button
-              onClick={decreaseFontSize}
+              onClick={() => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN))}
               disabled={fontSize <= FONT_SIZE_MIN}
               data-testid="button-font-decrease"
               title="הקטן פונט"
               className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <AArrowDown className="w-4 h-4" />
-              <span>A</span>
+              <AArrowDown className="w-4 h-4" /><span>A</span>
             </button>
-
             <button
-              onClick={increaseFontSize}
+              onClick={() => setFontSize(f => Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX))}
               disabled={fontSize >= FONT_SIZE_MAX}
               data-testid="button-font-increase"
               title="הגדל פונט"
               className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <AArrowUp className="w-4 h-4" />
-              <span>A</span>
+              <AArrowUp className="w-4 h-4" /><span>A</span>
             </button>
 
             <div className="w-px h-5 bg-border" />
@@ -147,15 +140,13 @@ export default function Home() {
               title={isDark ? 'מצב יום' : 'מצב לילה'}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              {isDark
-                ? <Sun className="w-4 h-4" />
-                : <Moon className="w-4 h-4" />}
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               <span dir="rtl">{isDark ? 'יום' : 'לילה'}</span>
             </button>
           </div>
         </header>
 
-        {/* Navigation dropdowns */}
+        {/* ── Navigation dropdowns ────────────────────────────────── */}
         <NavigationBar
           selectedBook={selectedBook}
           selectedChapter={selectedChapter}
@@ -167,52 +158,58 @@ export default function Home() {
           onVerseChange={setSelectedVerse}
         />
 
-        {/* Voice search button */}
-        <div className="flex justify-center py-4">
+        {/* ── Voice search ─────────────────────────────────────────── */}
+        <div className="flex justify-center py-2">
           <VoiceSearchButton onReferenceDetected={handleVoiceReference} />
         </div>
 
-        {/* Verse display with prev/next arrows */}
-        <div className="relative">
-          {/* Prev arrow (RTL: right side = previous) */}
+        {/* ── Verse display ────────────────────────────────────────── */}
+        <VerseDisplay
+          bookHebrew={currentBook?.hebrew ?? ''}
+          chapter={selectedChapter}
+          verse={selectedVerse}
+          verseText={verseText ?? ''}
+          isLoading={isLoadingVerse}
+          fontSize={fontSize}
+        />
+
+        {/* ── Rashi commentary ─────────────────────────────────────── */}
+        {!isLoadingVerse && (
+          <RashiCommentary
+            commentary={rashiText ?? null}
+            isLoading={isLoadingRashi}
+          />
+        )}
+
+        {/* ── Bottom navigation arrows ──────────────────────────────
+              RTL layout: ChevronRight = "previous" (right side),
+                          ChevronLeft  = "next"     (left side)    */}
+        <div className="flex items-center justify-center gap-6 pb-12" dir="rtl">
+          {/* Previous verse — right in RTL */}
           <button
             onClick={goPrev}
             disabled={isAtStart}
             data-testid="button-prev-verse"
             title="פסוק קודם"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full border-2 border-primary/40 bg-card text-primary flex items-center justify-center transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
+            className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-primary/50 bg-card text-primary text-lg font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95"
           >
-            <ChevronRight className="w-8 h-8" />
+            <ChevronRight className="w-7 h-7" />
+            <span>פסוק קודם</span>
           </button>
 
-          {/* Next arrow (RTL: left side = next) */}
+          {/* Next verse — left in RTL */}
           <button
             onClick={goNext}
             disabled={isAtEnd}
             data-testid="button-next-verse"
             title="פסוק הבא"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 rounded-full border-2 border-primary/40 bg-card text-primary flex items-center justify-center transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm"
+            className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-primary/50 bg-card text-primary text-lg font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95"
           >
-            <ChevronLeft className="w-8 h-8" />
+            <span>פסוק הבא</span>
+            <ChevronLeft className="w-7 h-7" />
           </button>
-
-          <VerseDisplay
-            bookHebrew={currentBook?.hebrew || ''}
-            chapter={selectedChapter}
-            verse={selectedVerse}
-            verseText={verseText || ''}
-            isLoading={isLoadingVerse}
-            fontSize={fontSize}
-          />
         </div>
 
-        {/* Rashi commentary */}
-        {!isLoadingVerse && (
-          <RashiCommentary
-            commentary={rashiText}
-            isLoading={isLoadingRashi}
-          />
-        )}
       </div>
     </div>
   );
