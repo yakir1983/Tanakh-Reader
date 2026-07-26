@@ -18,8 +18,9 @@ export default function Home() {
   const [book,     setBook]     = useState('Genesis');
   const [chapter,  setChapter]  = useState(1);
   const [verse,    setVerse]    = useState(1);
-  const [isDark,   setIsDark]   = useState(false);
-  const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
+  const [isDark,    setIsDark]    = useState(false);
+  const [fontSize,  setFontSize]  = useState(FONT_SIZE_DEFAULT);
+  const [aiAnswer,  setAiAnswer]  = useState('');
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -168,8 +169,28 @@ export default function Home() {
         />
 
         {/* ── Microphone ───────────────────────────────────────────── */}
-        <div className="flex justify-center">
-          <VoiceSearchButton onReferenceDetected={handleVoice} />
+        <div className="flex flex-col items-center gap-4">
+          <VoiceSearchButton
+            onReferenceDetected={(b, c, v) => { setAiAnswer(''); handleVoice(b, c, v); }}
+            onAnswer={text => setAiAnswer(text)}
+            currentBook={book}
+            currentChapter={chapter}
+            currentVerse={verse}
+          />
+          {aiAnswer && (
+            <div
+              dir="rtl"
+              className="relative w-full max-w-md rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm text-foreground leading-relaxed"
+              style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+            >
+              <button
+                onClick={() => setAiAnswer('')}
+                className="absolute top-2 left-3 text-muted-foreground hover:text-foreground transition-colors text-xs"
+                aria-label="סגור"
+              >✕</button>
+              {aiAnswer}
+            </div>
+          )}
         </div>
 
         {/* ── Verse ───────────────────────────────────────────────── */}

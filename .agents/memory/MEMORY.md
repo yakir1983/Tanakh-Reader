@@ -1,0 +1,1 @@
+- [OpenAI model behavior](openai-model-behavior.md) — gpt-5-mini for JSON extraction, gpt-5.6-terra mandatory for Hebrew Q&A; mini/nano return empty content for open-ended Hebrew.
