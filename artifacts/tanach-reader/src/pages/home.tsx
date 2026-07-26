@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, AArrowUp, AArrowDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Moon, Sun, ChevronRight, ChevronLeft } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
@@ -136,12 +136,12 @@ export default function Home() {
             <button onClick={() => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN))}
               disabled={fontSize <= FONT_SIZE_MIN} data-testid="button-font-decrease"
               className={ctrlBtn()}>
-              <AArrowDown className="w-4 h-4" /><span>A</span>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
             </button>
             <button onClick={() => setFontSize(f => Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX))}
               disabled={fontSize >= FONT_SIZE_MAX} data-testid="button-font-increase"
               className={ctrlBtn()}>
-              <AArrowUp className="w-4 h-4" /><span>A</span>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
             </button>
 
             <div className="w-px h-5 bg-border mx-1" />
