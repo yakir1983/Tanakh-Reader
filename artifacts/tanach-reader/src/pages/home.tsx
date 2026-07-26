@@ -102,19 +102,22 @@ export default function Home() {
     [chapterCount, verseCount, handleBook, handleChapter, handleVerse],
   );
 
-  // ── TTS — cancel previous, speak verse text immediately ─────────────────
+  // Strip ALL Hebrew diacritics (nikud + cantillation) for cleaner TTS
+  const toSpeakText = (text: string) =>
+    text.replace(/[\u0591-\u05C7]/g, '').replace(/\s+/g, ' ').trim();
+
+  // ── TTS — exactly as requested: cancel → utterance → speak ───────────────
   const toggleTTS = () => {
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-    synth.cancel();
+    speechSynthesis.cancel();
     if (speaking) { setSpeaking(false); return; }
-    if (!verseText) return;
-    const utt   = new SpeechSynthesisUtterance(verseText);
-    utt.lang    = 'he-IL';
-    utt.rate    = 0.85;
-    utt.onend   = () => setSpeaking(false);
-    utt.onerror = () => setSpeaking(false);
-    synth.speak(utt);
+    const currentVerseText = toSpeakText(verseText);
+    if (!currentVerseText) return;
+    const utterance = new SpeechSynthesisUtterance(currentVerseText);
+    utterance.lang = 'he-IL';
+    utterance.rate = 0.85;
+    utterance.onend   = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    speechSynthesis.speak(utterance);
     setSpeaking(true);
   };
 
