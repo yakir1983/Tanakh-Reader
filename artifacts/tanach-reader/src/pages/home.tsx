@@ -1,19 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Moon, Sun, AArrowUp, AArrowDown,
-  ChevronRight, ChevronLeft, Volume2, VolumeX,
-} from 'lucide-react';
+import { Moon, Sun, AArrowUp, AArrowDown, Volume2, VolumeX } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
-import {
-  getBookIndex,
-  getVerseText,
-  getRashiSegments,
-  rashiSegmentsToPlainText,
-} from '@/lib/sefaria-api';
+import { getBookIndex, getVerseText, getRashiSegments } from '@/lib/sefaria-api';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import type { TanachBook } from '@/lib/tanach-data';
 
@@ -23,156 +15,139 @@ const FONT_SIZE_STEP    = 0.5;
 const FONT_SIZE_DEFAULT = 5;
 
 export default function Home() {
-  const [selectedBook,    setSelectedBook]    = useState<string>('Genesis');
-  const [selectedChapter, setSelectedChapter] = useState<number>(1);
-  const [selectedVerse,   setSelectedVerse]   = useState<number>(1);
-  const [isDark,          setIsDark]          = useState(false);
-  const [fontSize,        setFontSize]        = useState(FONT_SIZE_DEFAULT);
-  const [isSpeaking,      setIsSpeaking]      = useState(false);
-  const utteranceRef  = useRef<SpeechSynthesisUtterance | null>(null);
-  const ttsLockRef    = useRef(false);   // guard against double-tap race
+  const [book,      setBook]      = useState('Genesis');
+  const [chapter,   setChapter]   = useState(1);
+  const [verse,     setVerse]     = useState(1);
+  const [isDark,    setIsDark]    = useState(false);
+  const [fontSize,  setFontSize]  = useState(FONT_SIZE_DEFAULT);
+  const [speaking,  setSpeaking]  = useState(false);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  // ── Data queries ─────────────────────────────────────────────────────────
+  // ── Sefaria queries ──────────────────────────────────────────────────────
   const { data: bookIndex } = useQuery({
-    queryKey: ['book-index', selectedBook],
-    queryFn:  () => getBookIndex(selectedBook),
-    enabled:  !!selectedBook,
+    queryKey:  ['index', book],
+    queryFn:   () => getBookIndex(book),
     staleTime: Infinity,
   });
 
   const chapterCount = bookIndex?.length ?? 0;
-  const verseCount   = bookIndex?.[selectedChapter - 1] ?? 0;
+  const verseCount   = bookIndex?.[chapter - 1] ?? 0;
 
-  const { data: verseText, isLoading: isLoadingVerse } = useQuery({
-    queryKey: ['verse', selectedBook, selectedChapter, selectedVerse],
-    queryFn:  () => getVerseText(selectedBook, selectedChapter, selectedVerse),
-    enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
+  const { data: verseText, isLoading: loadingVerse } = useQuery({
+    queryKey: ['verse', book, chapter, verse],
+    queryFn:  () => getVerseText(book, chapter, verse),
+    enabled:  chapterCount > 0,
     staleTime: 0,
   });
 
-  const { data: rashiSegments, isLoading: isLoadingRashi } = useQuery({
-    queryKey: ['rashi', selectedBook, selectedChapter, selectedVerse],
-    queryFn:  () => getRashiSegments(selectedBook, selectedChapter, selectedVerse),
-    enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
+  const { data: rashiSegments, isLoading: loadingRashi } = useQuery({
+    queryKey: ['rashi', book, chapter, verse],
+    queryFn:  () => getRashiSegments(book, chapter, verse),
+    enabled:  chapterCount > 0,
     staleTime: 0,
   });
 
-  // ── Batched navigation handlers (no useEffect — avoids two-render race) ──
-  const handleBookChange = (book: string) => {
-    setSelectedBook(book);
-    setSelectedChapter(1);
-    setSelectedVerse(1);
-  };
-
-  const handleChapterChange = (chapter: number) => {
-    setSelectedChapter(chapter);
-    setSelectedVerse(1);
-  };
-
-  // ── Stop TTS when verse changes ──────────────────────────────────────────
-  useEffect(() => {
+  // ── Navigation handlers — always batch so one render, one query ──────────
+  const handleBook = useCallback((b: string) => {
     window.speechSynthesis?.cancel();
-    setIsSpeaking(false);
-  }, [selectedBook, selectedChapter, selectedVerse]);
+    setSpeaking(false);
+    setBook(b);
+    setChapter(1);
+    setVerse(1);
+  }, []);
 
-  // ── Voice-search callback ────────────────────────────────────────────────
-  const handleVoiceReference = useCallback(
-    (book?: TanachBook, chapter?: number, verse?: number) => {
-      if (book) {
-        setSelectedBook(book.english);
-        // Chapter/verse are validated after new bookIndex loads
-        if (chapter && chapter >= 1) setSelectedChapter(chapter);
-        if (verse   && verse   >= 1) setSelectedVerse(verse);
-      } else {
-        if (chapter && chapter >= 1 && chapter <= chapterCount)
-          setSelectedChapter(chapter);
-        if (verse   && verse   >= 1 && verse   <= verseCount)
-          setSelectedVerse(verse);
-      }
+  const handleChapter = useCallback((c: number) => {
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+    setChapter(c);
+    setVerse(1);
+  }, []);
+
+  const handleVerse = useCallback((v: number) => {
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+    setVerse(v);
+  }, []);
+
+  // Prev / Next verse (crosses chapter boundary)
+  const goPrev = () => {
+    if (verse > 1) {
+      handleVerse(verse - 1);
+    } else if (chapter > 1) {
+      const prevVerseCount = bookIndex?.[chapter - 2] ?? 1;
+      window.speechSynthesis?.cancel();
+      setSpeaking(false);
+      setChapter(c => c - 1);
+      setVerse(prevVerseCount);
+    }
+  };
+
+  const goNext = () => {
+    if (verse < verseCount) {
+      handleVerse(verse + 1);
+    } else if (chapter < chapterCount) {
+      handleChapter(chapter + 1);
+    }
+  };
+
+  const isAtStart = chapter === 1 && verse === 1;
+  const isAtEnd   = chapter === chapterCount && verse === verseCount;
+
+  // ── Voice search ─────────────────────────────────────────────────────────
+  const handleVoice = useCallback(
+    (b?: TanachBook, c?: number, v?: number) => {
+      if (b) { handleBook(b.english); }
+      if (c && c >= 1 && c <= chapterCount) handleChapter(c);
+      if (v && v >= 1 && v <= verseCount)   handleVerse(v);
     },
-    [chapterCount, verseCount]
+    [chapterCount, verseCount, handleBook, handleChapter, handleVerse]
   );
 
-  // ── Navigation ───────────────────────────────────────────────────────────
-  const goNext = () => {
-    if (!verseCount) return;
-    if (selectedVerse < verseCount) {
-      setSelectedVerse(v => v + 1);
-    } else if (selectedChapter < chapterCount) {
-      setSelectedChapter(c => c + 1);
-      setSelectedVerse(1);
-    }
-  };
-
-  const goPrev = () => {
-    if (selectedVerse > 1) {
-      setSelectedVerse(v => v - 1);
-    } else if (selectedChapter > 1) {
-      const prev = bookIndex?.[selectedChapter - 2] ?? 1;
-      setSelectedChapter(c => c - 1);
-      setSelectedVerse(prev);
-    }
-  };
-
-  const isAtStart = selectedChapter === 1 && selectedVerse === 1;
-  const isAtEnd   = selectedChapter === chapterCount && selectedVerse === verseCount;
-
-  // ── Text-to-Speech ───────────────────────────────────────────────────────
-  const stopTTS = () => {
-    window.speechSynthesis?.cancel();
-    utteranceRef.current = null;
-    ttsLockRef.current = false;
-    setIsSpeaking(false);
-  };
-
+  // ── TTS — simple: cancel any current speech, then speak verse text only ──
   const toggleTTS = () => {
     const synth = window.speechSynthesis;
     if (!synth) return;
 
-    // Stop if already speaking
-    if (isSpeaking) { stopTTS(); return; }
-
-    // Guard against rapid double-tap
-    if (ttsLockRef.current) return;
-    ttsLockRef.current = true;
-
-    // Always cancel any lingering speech before starting (iOS quirk)
+    // Always cancel first
     synth.cancel();
 
-    const currentBook = getBookByEnglish(selectedBook);
-    const rashiPlain  = rashiSegmentsToPlainText(rashiSegments ?? []);
-    const fullText = [
-      currentBook?.hebrew,
-      `פרק ${selectedChapter} פסוק ${selectedVerse}`,
-      verseText ?? '',
-      rashiPlain ? `פירוש רש״י: ${rashiPlain}` : '',
-    ]
-      .filter(Boolean)
-      .join('. ');
+    if (speaking) {
+      // Was speaking → just stop
+      setSpeaking(false);
+      return;
+    }
 
-    const utt = new SpeechSynthesisUtterance(fullText);
-    utt.lang   = 'he-IL';
-    utt.rate   = 0.85;
-    utt.onstart = () => { ttsLockRef.current = false; setIsSpeaking(true); };
-    utt.onend   = () => stopTTS();
-    utt.onerror = () => stopTTS();
-    utteranceRef.current = utt;
+    if (!verseText) return;
 
-    // Small delay lets iOS flush the cancel() before speak()
-    setTimeout(() => { synth.speak(utt); }, 50);
+    const utt   = new SpeechSynthesisUtterance(verseText);
+    utt.lang    = 'he-IL';
+    utt.rate    = 0.85;
+    utt.onend   = () => setSpeaking(false);
+    utt.onerror = () => setSpeaking(false);
+    synth.speak(utt);
+    setSpeaking(true);
   };
 
-  const currentBook = getBookByEnglish(selectedBook);
-  const ttsAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const currentBook    = getBookByEnglish(book);
+  const ttsAvailable   = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  const btnCls = (active = false) =>
+    [
+      'flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm transition-colors',
+      'border-border bg-card hover:bg-accent',
+      active
+        ? 'text-primary border-primary/50'
+        : 'text-foreground',
+      'disabled:opacity-30 disabled:cursor-not-allowed',
+    ].join(' ');
 
   return (
     <div className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300">
-      <div className="container mx-auto py-8 sm:py-12 space-y-10 max-w-4xl">
+      <div className="container mx-auto py-8 sm:py-12 space-y-8 max-w-4xl">
 
         {/* ── Header ──────────────────────────────────────────────── */}
         <header className="text-center space-y-2">
@@ -187,14 +162,14 @@ export default function Home() {
             לימוד התנ״ך עם פירוש רש״י
           </p>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-3 pt-3 flex-wrap">
+          {/* Control bar */}
+          <div className="flex items-center justify-center gap-2 pt-3 flex-wrap">
             <button
               onClick={() => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN))}
               disabled={fontSize <= FONT_SIZE_MIN}
               data-testid="button-font-decrease"
               title="הקטן פונט"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+              className={btnCls()}
             >
               <AArrowDown className="w-4 h-4" /><span>A</span>
             </button>
@@ -203,36 +178,35 @@ export default function Home() {
               disabled={fontSize >= FONT_SIZE_MAX}
               data-testid="button-font-increase"
               title="הגדל פונט"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+              className={btnCls()}
             >
               <AArrowUp className="w-4 h-4" /><span>A</span>
             </button>
 
-            <div className="w-px h-5 bg-border" />
+            <div className="w-px h-5 bg-border mx-1" />
 
-            {/* TTS button */}
             {ttsAvailable && (
               <button
                 onClick={toggleTTS}
                 disabled={!verseText}
                 data-testid="button-tts"
-                title={isSpeaking ? 'עצור הקראה' : 'הקרא בקול'}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+                title={speaking ? 'עצור' : 'הקרא בקול'}
+                className={btnCls(speaking)}
               >
-                {isSpeaking
+                {speaking
                   ? <VolumeX className="w-4 h-4 text-primary" />
                   : <Volume2 className="w-4 h-4" />}
-                <span dir="rtl">{isSpeaking ? 'עצור' : 'הקרא'}</span>
+                <span dir="rtl">{speaking ? 'עצור' : 'הקרא'}</span>
               </button>
             )}
 
-            <div className="w-px h-5 bg-border" />
+            <div className="w-px h-5 bg-border mx-1" />
 
             <button
               onClick={() => setIsDark(d => !d)}
               data-testid="button-dark-mode-toggle"
               title={isDark ? 'מצב יום' : 'מצב לילה'}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent"
+              className={btnCls()}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               <span dir="rtl">{isDark ? 'יום' : 'לילה'}</span>
@@ -240,62 +214,56 @@ export default function Home() {
           </div>
         </header>
 
-        {/* ── Dropdowns ───────────────────────────────────────────── */}
+        {/* ── Navigation ──────────────────────────────────────────── */}
         <NavigationBar
-          selectedBook={selectedBook}
-          selectedChapter={selectedChapter}
-          selectedVerse={selectedVerse}
+          selectedBook={book}
+          selectedChapter={chapter}
+          selectedVerse={verse}
           chapterCount={chapterCount}
           verseCount={verseCount}
-          onBookChange={handleBookChange}
-          onChapterChange={handleChapterChange}
-          onVerseChange={setSelectedVerse}
+          onBookChange={handleBook}
+          onChapterChange={handleChapter}
+          onVerseChange={handleVerse}
         />
 
         {/* ── Voice search ─────────────────────────────────────────── */}
-        <div className="flex justify-center py-2">
-          <VoiceSearchButton onReferenceDetected={handleVoiceReference} />
+        <div className="flex justify-center">
+          <VoiceSearchButton onReferenceDetected={handleVoice} />
         </div>
 
         {/* ── Verse ───────────────────────────────────────────────── */}
         <VerseDisplay
           bookHebrew={currentBook?.hebrew ?? ''}
-          chapter={selectedChapter}
-          verse={selectedVerse}
+          chapter={chapter}
+          verse={verse}
           verseText={verseText ?? ''}
-          isLoading={isLoadingVerse}
+          isLoading={loadingVerse}
           fontSize={fontSize}
         />
 
         {/* ── Rashi ───────────────────────────────────────────────── */}
-        {!isLoadingVerse && (
-          <RashiCommentary
-            segments={rashiSegments ?? []}
-            isLoading={isLoadingRashi}
-          />
-        )}
+        <RashiCommentary
+          segments={rashiSegments ?? []}
+          isLoading={loadingRashi}
+        />
 
-        {/* ── Prev / Next ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-center gap-6 pb-12" dir="rtl">
+        {/* ── Prev / Next verse ────────────────────────────────────── */}
+        <div className="flex items-center justify-center gap-4 pb-16" dir="rtl">
           <button
             onClick={goPrev}
             disabled={isAtStart}
             data-testid="button-prev-verse"
-            title="פסוק קודם"
-            className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-primary/50 bg-card text-primary text-lg font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-primary/40 bg-card text-primary font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed active:scale-95"
           >
-            <ChevronRight className="w-7 h-7" />
-            <span>פסוק קודם</span>
+            ›<span>פסוק קודם</span>
           </button>
           <button
             onClick={goNext}
             disabled={isAtEnd}
             data-testid="button-next-verse"
-            title="פסוק הבא"
-            className="flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-primary/50 bg-card text-primary text-lg font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-primary/40 bg-card text-primary font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed active:scale-95"
           >
-            <span>פסוק הבא</span>
-            <ChevronLeft className="w-7 h-7" />
+            <span>פסוק הבא</span>‹
           </button>
         </div>
 
