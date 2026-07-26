@@ -102,23 +102,70 @@ export default function Home() {
     [chapterCount, verseCount, handleBook, handleChapter, handleVerse],
   );
 
-  // Strip ALL Hebrew diacritics (nikud + cantillation) for cleaner TTS
-  const toSpeakText = (text: string) =>
+  // ── TTS helpers ──────────────────────────────────────────────────────────
+
+  /** Remove nikud + cantillation (U+0591–U+05C7) so TTS engines read cleanly. */
+  const cleanForTTS = (text: string) =>
     text.replace(/[\u0591-\u05C7]/g, '').replace(/\s+/g, ' ').trim();
 
-  // ── TTS — exactly as requested: cancel → utterance → speak ───────────────
-  const toggleTTS = () => {
-    speechSynthesis.cancel();
-    if (speaking) { setSpeaking(false); return; }
-    const currentVerseText = toSpeakText(verseText);
-    if (!currentVerseText) return;
-    const utterance = new SpeechSynthesisUtterance(currentVerseText);
-    utterance.lang = 'he-IL';
-    utterance.rate = 0.85;
+  /** Find best Hebrew voice from the loaded list; null = use browser default. */
+  const findHebrewVoice = (): SpeechSynthesisVoice | null => {
+    const voices = window.speechSynthesis.getVoices();
+    return (
+      voices.find(v => v.lang === 'he-IL') ??
+      voices.find(v => v.lang.startsWith('he')) ??
+      null
+    );
+  };
+
+  /** Speak text now. Must be called synchronously inside a user-gesture handler. */
+  const speakNow = (text: string) => {
+    const cleanText = cleanForTTS(text);
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang  = 'he-IL';
+    utterance.rate  = 0.85;
+    utterance.onerror = (e) => { console.error('TTS Error:', e); setSpeaking(false); };
     utterance.onend   = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    speechSynthesis.speak(utterance);
+
+    const heVoice = findHebrewVoice();
+    if (heVoice) utterance.voice = heVoice;
+
+    // Resume in case the engine was suspended (common on mobile after page focus change)
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    window.speechSynthesis.speak(utterance);
     setSpeaking(true);
+  };
+
+  // ── TTS button handler — must stay synchronous inside onClick ────────────
+  const toggleTTS = () => {
+    if (!('speechSynthesis' in window)) {
+      alert('הדפדפן אינו תומך בהקראה');
+      return;
+    }
+
+    // Always cancel first (stops any pending speech)
+    window.speechSynthesis.cancel();
+
+    if (speaking) {
+      setSpeaking(false);
+      return;
+    }
+
+    const text = verseText;
+    if (!text) return;
+
+    // Voices may not be loaded on first call — load and speak immediately if
+    // they're already there, otherwise wait for voiceschanged once.
+    if (window.speechSynthesis.getVoices().length > 0) {
+      speakNow(text);
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        speakNow(text);
+      };
+    }
   };
 
   const currentBook  = getBookByEnglish(book);
