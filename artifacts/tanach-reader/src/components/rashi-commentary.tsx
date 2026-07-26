@@ -50,8 +50,8 @@ export function RashiCommentary({ segments, isLoading }: RashiCommentaryProps) {
               ].join(' ')}
               style={{
                 fontFamily: 'Frank Ruhl Libre, serif',
-                fontSize: '1rem',
-                lineHeight: '1.9',
+                fontSize: '1.2rem',
+                lineHeight: '2.1',
                 backgroundImage:
                   'linear-gradient(160deg, hsl(var(--primary)/0.04), hsl(var(--primary)/0.10))',
               }}
