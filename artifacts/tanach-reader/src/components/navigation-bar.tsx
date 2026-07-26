@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CustomSelect } from '@/components/custom-select';
 import { TANACH_BOOKS } from '@/lib/tanach-data';
 import { toHebrewNumeral } from '@/lib/hebrew-numerals';
+import { getParashiyot } from '@/lib/parashiyot';
 
 interface NavigationBarProps {
   selectedBook: string;
@@ -12,6 +13,8 @@ interface NavigationBarProps {
   onBookChange: (book: string) => void;
   onChapterChange: (chapter: number) => void;
   onVerseChange: (verse: number) => void;
+  /** Called when user picks a parasha; sets both chapter and verse at once. */
+  onParashaChange: (chapter: number, verse: number) => void;
 }
 
 const bookGroups = [
@@ -29,7 +32,31 @@ export function NavigationBar({
   onBookChange,
   onChapterChange,
   onVerseChange,
+  onParashaChange,
 }: NavigationBarProps) {
+  // ── Parashiyot (Torah only) ──────────────────────────────────────────────
+  const parashiyot = useMemo(() => getParashiyot(selectedBook), [selectedBook]);
+
+  const parashaOptions = useMemo(() => {
+    if (!parashiyot) return null;
+    return parashiyot.map((p, i) => ({
+      value: String(i),
+      label: p.hebrew,
+    }));
+  }, [parashiyot]);
+
+  // Determine which parasha is currently active (last one whose chapter ≤ selectedChapter)
+  const activeParashaIndex = useMemo(() => {
+    if (!parashiyot) return null;
+    let best = 0;
+    for (let i = 0; i < parashiyot.length; i++) {
+      if (parashiyot[i].chapter <= selectedChapter) best = i;
+      else break;
+    }
+    return best;
+  }, [parashiyot, selectedChapter]);
+
+  // ── Chapter / verse options ──────────────────────────────────────────────
   const chapterOptions = useMemo(
     () => Array.from({ length: chapterCount }, (_, i) => ({
       value: String(i + 1),
@@ -48,12 +75,28 @@ export function NavigationBar({
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-sm mx-auto px-4">
+      {/* Book */}
       <CustomSelect
         testId="select-book"
         value={selectedBook}
         groups={bookGroups}
         onChange={onBookChange}
       />
+
+      {/* Parasha (Torah only) */}
+      {parashaOptions && activeParashaIndex !== null && (
+        <CustomSelect
+          testId="select-parasha"
+          value={String(activeParashaIndex)}
+          options={parashaOptions}
+          onChange={v => {
+            const p = parashiyot![Number(v)];
+            if (p) onParashaChange(p.chapter, p.verse);
+          }}
+        />
+      )}
+
+      {/* Chapter */}
       <CustomSelect
         testId="select-chapter"
         value={String(selectedChapter)}
@@ -61,6 +104,8 @@ export function NavigationBar({
         disabled={chapterCount === 0}
         onChange={v => onChapterChange(Number(v))}
       />
+
+      {/* Verse */}
       <CustomSelect
         testId="select-verse"
         value={String(selectedVerse)}

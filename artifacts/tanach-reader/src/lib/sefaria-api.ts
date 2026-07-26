@@ -76,12 +76,22 @@ export async function getChapterVerses(
  * Returns string[] where each item is "<b>dibur</b> commentary…".
  * Rendered with dangerouslySetInnerHTML — zero string manipulation.
  */
+/**
+ * Build a Sefaria-compatible ref slug for a book name.
+ * Spaces → underscores so "I Samuel" becomes "I_Samuel" in the URL.
+ * Sefaria accepts both spaces (URL-encoded) and underscores; underscores are safer.
+ */
+function sefariaSlug(englishName: string): string {
+  return englishName.replace(/ /g, '_');
+}
+
 export async function getRashiSegments(
   englishName: string,
   chapter: number,
   verse: number,
 ): Promise<string[]> {
-  const url = `https://www.sefaria.org/api/texts/Rashi_on_${englishName}.${chapter}.${verse}?lang=he&context=0`;
+  const ref = `Rashi_on_${sefariaSlug(englishName)}`;
+  const url = `https://www.sefaria.org/api/texts/${ref}.${chapter}.${verse}?lang=he&context=0`;
   try {
     const res = await fetch(url);
     if (!res.ok) return [];

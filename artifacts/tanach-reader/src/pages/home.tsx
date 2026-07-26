@@ -68,6 +68,10 @@ export default function Home() {
     setVerse(v);
   }, []);
 
+  const handleParasha = useCallback((c: number, v: number) => {
+    setChapter(c); setVerse(v);
+  }, []);
+
   const goPrev = () => {
     if (verse > 1) { setVerse(v => v - 1); }
     else if (chapter > 1) { setChapter(c => c - 1); setVerse(bookIndex?.[chapter - 2] ?? 1); }
@@ -160,6 +164,7 @@ export default function Home() {
           onBookChange={handleBook}
           onChapterChange={handleChapter}
           onVerseChange={handleVerse}
+          onParashaChange={handleParasha}
         />
 
         {/* ── Microphone ───────────────────────────────────────────── */}
