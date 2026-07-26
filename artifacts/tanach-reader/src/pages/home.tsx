@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Moon, Sun, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
@@ -21,6 +21,9 @@ export default function Home() {
   const [isDark,    setIsDark]    = useState(false);
   const [fontSize,  setFontSize]  = useState(FONT_SIZE_DEFAULT);
   const [aiAnswer,  setAiAnswer]  = useState('');
+  const [navError,  setNavError]  = useState('');
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryClient = useQueryClient();
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -56,6 +59,13 @@ export default function Home() {
     staleTime: Infinity,
   });
 
+  // ── Error toast helper ────────────────────────────────────────────────────
+  const showNavError = useCallback((msg: string) => {
+    setNavError(msg);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setNavError(''), 5000);
+  }, []);
+
   // ── Navigation handlers (batched — one render, one query) ─────────────────
   const handleBook = useCallback((b: string) => {
     setBook(b); setChapter(1); setVerse(1);
@@ -87,26 +97,55 @@ export default function Home() {
   const isAtEnd   = chapter === chapterCount && verse === verseCount;
 
   // ── Voice search callback ─────────────────────────────────────────────────
-  // All three setters are called together → React 18 batches into one render.
-  // The queries react to the new [book, chapter, verse] key immediately.
+  // Validates chapter/verse against the book index before navigating.
   const handleVoice = useCallback(
-    (b?: TanachBook, c?: number, v?: number) => {
-      const newBook    = b?.english;
-      const newChapter = (c && c >= 1) ? c : 1;
-      const newVerse   = (v && v >= 1) ? v : 1;
+    async (b?: TanachBook, c?: number, v?: number) => {
+      const targetBook    = b?.english ?? book;
+      const targetBookHeb = getBookByEnglish(targetBook)?.hebrew ?? targetBook;
+      const newChapter    = (c && c >= 1) ? c : 1;
+      const newVerse      = (v && v >= 1) ? v : 1;
 
-      if (newBook) {
-        // New book found — reset all three at once
-        setBook(newBook);
+      // Fetch (or reuse cached) book structure for the target book
+      let index: number[];
+      try {
+        index = await queryClient.fetchQuery({
+          queryKey: ['index', targetBook],
+          queryFn:  () => getBookIndex(targetBook),
+          staleTime: Infinity,
+        });
+      } catch {
+        // If we can't fetch the index, navigate anyway (network issue, not a user error)
+        index = [];
+      }
+
+      // Validate chapter
+      if (index.length > 0 && (newChapter < 1 || newChapter > index.length)) {
+        showNavError(
+          `אין פרק ${newChapter} בספר ${targetBookHeb} — בספר זה יש ${index.length} פרקים`,
+        );
+        return;
+      }
+
+      // Validate verse (only when a specific verse was requested)
+      const maxVerse = index[newChapter - 1] ?? 0;
+      if (v && v >= 1 && index.length > 0 && maxVerse > 0 && v > maxVerse) {
+        showNavError(
+          `אין פסוק ${v} בפרק ${newChapter} — בפרק זה יש ${maxVerse} פסוקים`,
+        );
+        return;
+      }
+
+      // All valid — navigate
+      if (b?.english) {
+        setBook(b.english);
         setChapter(newChapter);
         setVerse(newVerse);
       } else {
-        // Only chapter / verse mentioned — update within current book
         if (c && c >= 1) { setChapter(c); setVerse(newVerse); }
         else if (v && v >= 1) setVerse(v);
       }
     },
-    [], // no external deps — setters are stable references
+    [book, queryClient, showNavError],
   );
 
   const currentBook = getBookByEnglish(book);
@@ -177,6 +216,25 @@ export default function Home() {
             currentChapter={chapter}
             currentVerse={verse}
           />
+
+          {/* ── Navigation error toast ──────────────────────────────── */}
+          {navError && (
+            <div
+              dir="rtl"
+              role="alert"
+              className="flex items-start gap-2 w-full max-w-md rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+            >
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span className="flex-1">{navError}</span>
+              <button
+                onClick={() => setNavError('')}
+                className="text-destructive/60 hover:text-destructive transition-colors text-xs"
+                aria-label="סגור"
+              >✕</button>
+            </div>
+          )}
+
           {aiAnswer && (
             <div
               dir="rtl"
