@@ -77,6 +77,9 @@ const SUBSTITUTIONS: [RegExp, string][] = [
 /** Normalise a transcript: apply substitutions then strip nikud/cantillation */
 export function normalise(text: string): string {
   let s = text.trim();
+  // Strip Unicode bidi/directional markers that speech engines sometimes inject
+  // (U+200B–U+200F, U+202A–U+202E, U+FEFF)
+  s = s.replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '');
   for (const [pat, rep] of SUBSTITUTIONS) s = s.replace(pat, rep);
   // Strip nikud (U+05B0–U+05C7) and cantillation (U+0591–U+05AF)
   s = s.replace(/[\u0591-\u05C7]/g, '');
@@ -223,44 +226,59 @@ export interface ParsedReference {
 }
 
 /**
+ * Connector words that appear in spoken references but carry no numeric value.
+ * They are used only as positional hints ("פרק" → next token is chapter, etc.)
+ * and then stripped before fallback tokenisation so GEMATRIA doesn't misread them.
+ */
+const CONNECTOR_WORDS = new Set([
+  'פרק', 'בפרק', 'הפרק',
+  'פסוק', 'בפסוק', 'הפסוק',
+  'ספר', 'בספר', 'הספר',
+  'מגילת', 'מגילה',
+]);
+
+/**
  * Parse a raw Hebrew voice transcript into a structured reference.
  * Handles patterns like:
- *   "בראשית פרק א פסוק א"
- *   "מלכים א פרק שלושה"
- *   "תהלים כג ד"
+ *   "בראשית פרק א פסוק א"   → chapter 1, verse 1
+ *   "תהילים פרק א"           → chapter 1
+ *   "תהלים כג ד"             → chapter 23, verse 4
+ *   "מלכים א פרק שלושה"     → chapter 3
  */
 export function parseHebrewReference(rawTranscript: string): ParsedReference {
   const norm = normalise(rawTranscript);
   const result: ParsedReference = {};
 
-  // Find book
+  // 1. Find book
   result.book = findBookInText(norm) ?? undefined;
 
-  // After stripping the book name from the text, look for chapter + verse
+  // 2. Strip book name + all its aliases from text so only numbers remain
   let rest = norm;
   if (result.book) {
-    // Remove the matched book name from rest to avoid re-parsing
     rest = rest.replace(result.book.hebrew, '').trim();
-    // Also strip known aliases
-    for (const alias of Object.keys(BOOK_ALIASES)) {
+    // Sort longest-first so "שמואל א" is removed before "שמואל"
+    const aliasKeys = Object.keys(BOOK_ALIASES).sort((a, b) => b.length - a.length);
+    for (const alias of aliasKeys) {
       rest = rest.replace(alias, '').trim();
     }
   }
 
-  // Patterns: "פרק X פסוק Y" or just consecutive tokens after book name
-  const chapterMatch = rest.match(/פרק\s+([^\s]+)/);
-  const verseMatch   = rest.match(/פסוק\s+([^\s]+)/);
+  // 3. Keyword-guided parsing: "פרק X" → chapter, "פסוק X" → verse
+  //    \s* instead of \s+ so a bidi-mark-free gap still matches
+  const chapterMatch = rest.match(/פרק\s*([^\s]+)/);
+  const verseMatch   = rest.match(/פסוק\s*([^\s]+)/);
 
   if (chapterMatch) result.chapter = parseNum(chapterMatch[1]) ?? undefined;
   if (verseMatch)   result.verse   = parseNum(verseMatch[1])   ?? undefined;
 
-  // Fallback: if no explicit "פרק"/"פסוק", try two bare tokens
+  // 4. Fallback: no keywords found — strip connector words then use positional tokens
   if (!result.chapter && !result.verse) {
     const tokens = rest
-      .replace(/[^\u05D0-\u05EA\d\s]/g, ' ')
+      .replace(/[^\u05D0-\u05EA\d\s]/g, ' ')   // keep Hebrew letters, digits, spaces
       .trim()
       .split(/\s+/)
-      .filter(Boolean);
+      .filter(t => t && !CONNECTOR_WORDS.has(t)); // drop connector words
+
     if (tokens[0]) result.chapter = parseNum(tokens[0]) ?? undefined;
     if (tokens[1]) result.verse   = parseNum(tokens[1]) ?? undefined;
   }
