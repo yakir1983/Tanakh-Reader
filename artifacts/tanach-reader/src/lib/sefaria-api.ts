@@ -1,4 +1,5 @@
 // Sefaria API client
+import { TANACH_BOOKS } from './tanach-data';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,66 @@ export async function getChapterVerses(
  */
 function sefariaSlug(englishName: string): string {
   return englishName.replace(/ /g, '_');
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+export interface SearchResult {
+  refHebrew: string;   // display ref in Hebrew (from Sefaria)
+  book: string;        // english book name for navigation
+  chapter: number;
+  verse: number;
+  heText: string;      // Hebrew snippet, cantillation stripped
+}
+
+/** Parse a Sefaria ref string like "Genesis 1:1" or "I Samuel 3:4" */
+function parseSefariaRef(ref: string): { book: string; chapter: number; verse: number } | null {
+  const m = ref.match(/^(.+?)\s+(\d+):(\d+)$/);
+  if (!m) return null;
+  const [, bookName, ch, v] = m;
+  const found = TANACH_BOOKS.find(b => b.english === bookName);
+  if (!found) return null;
+  return { book: bookName, chapter: Number(ch), verse: Number(v) };
+}
+
+function stripHtmlTags(html: string): string {
+  const el = document.createElement('span');
+  el.innerHTML = html;
+  return (el.textContent ?? '').replace(/[\u0591-\u05AF]/g, '').trim();
+}
+
+/**
+ * Search Tanach via Sefaria full-text search.
+ * Returns up to 8 results with ref, book, chapter, verse, and a Hebrew snippet.
+ */
+export async function searchTanach(query: string): Promise<SearchResult[]> {
+  const params = new URLSearchParams({
+    query,
+    type: 'text',
+    field: 'he',
+    size: '8',
+    slop: '5',
+    'filters[]': 'Tanakh',
+  });
+  try {
+    const res = await fetch(`https://www.sefaria.org/api/search-wrapper?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const hits: any[] = data?.hits?.hits ?? [];
+    return hits.flatMap(h => {
+      const src = h._source ?? {};
+      const ref: string  = src.ref ?? '';
+      const heRaw: string = src.he ?? src.exact ?? '';
+      const parsed = parseSefariaRef(ref);
+      if (!parsed) return [];
+      // Prefer the Hebrew ref Sefaria provides; fall back to the English ref
+      const refHebrew: string = src.heRef ?? ref;
+      const heText = stripHtmlTags(heRaw).slice(0, 120);
+      return [{ refHebrew, ...parsed, heText }];
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getRashiSegments(

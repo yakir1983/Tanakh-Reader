@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Moon, Sun, ChevronRight, ChevronLeft, Search } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
+import { SearchPanel } from '@/components/search-panel';
 import { getBookIndex, getChapterVerses, getRashiSegments } from '@/lib/sefaria-api';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import type { TanachBook } from '@/lib/tanach-data';
@@ -18,8 +19,9 @@ export default function Home() {
   const [book,     setBook]     = useState('Genesis');
   const [chapter,  setChapter]  = useState(1);
   const [verse,    setVerse]    = useState(1);
-  const [isDark,   setIsDark]   = useState(false);
-  const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
+  const [isDark,      setIsDark]      = useState(false);
+  const [fontSize,    setFontSize]    = useState(FONT_SIZE_DEFAULT);
+  const [searchOpen,  setSearchOpen]  = useState(false);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -146,6 +148,14 @@ export default function Home() {
 
             <div className="w-px h-5 bg-border mx-1" />
 
+            <button onClick={() => setSearchOpen(o => !o)} data-testid="button-search-toggle"
+              className={ctrlBtn() + (searchOpen ? ' text-primary border-primary/50 bg-primary/5' : '')}>
+              <Search className="w-4 h-4" />
+              <span dir="rtl">חיפוש</span>
+            </button>
+
+            <div className="w-px h-5 bg-border mx-1" />
+
             <button onClick={() => setIsDark(d => !d)} data-testid="button-dark-mode-toggle"
               className={ctrlBtn()}>
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -153,6 +163,16 @@ export default function Home() {
             </button>
           </div>
         </header>
+
+        {/* ── Search panel ─────────────────────────────────────────── */}
+        <SearchPanel
+          isOpen={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          onNavigate={(eng, c, v) => {
+            setBook(eng); setChapter(c); setVerse(v);
+            setSearchOpen(false);
+          }}
+        />
 
         {/* ── Dropdowns ───────────────────────────────────────────── */}
         <NavigationBar
