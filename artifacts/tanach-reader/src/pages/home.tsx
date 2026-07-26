@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Moon, Sun, AArrowUp, AArrowDown, Volume2, VolumeX, ChevronRight, ChevronLeft } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
@@ -21,7 +21,6 @@ export default function Home() {
   const [isDark,   setIsDark]   = useState(false);
   const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
   const [speaking, setSpeaking] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -103,53 +102,29 @@ export default function Home() {
     [chapterCount, verseCount, handleBook, handleChapter, handleVerse],
   );
 
-  // ── TTS — Google Translate Audio (reliable, works on all devices) ─────────
-
-  /** Strip nikud + cantillation before sending to TTS. */
-  const cleanForTTS = (text: string) =>
-    text.replace(/[\u0591-\u05C7]/g, '').replace(/\s+/g, ' ').trim();
-
-  /**
-   * Called directly inside onClick (user gesture) so mobile autoplay is allowed.
-   * Uses Google Translate TTS endpoint — returns MP3, no CORS issues for <audio>.
-   * Max ~200 chars per request; we split on sentence boundaries if needed.
-   */
+  // ── TTS — window.speechSynthesis, minimal and direct ─────────────────────
   const toggleTTS = () => {
-    // Stop if already playing
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-      setSpeaking(false);
-      return;
-    }
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
 
-    const clean = cleanForTTS(verseText);
-    if (!clean) return;
+    if (speaking) { setSpeaking(false); return; }
+    if (!verseText) return;
 
-    // Google Translate TTS — free, no key, supports Hebrew (he)
-    const url =
-      `https://translate.google.com/translate_tts` +
-      `?ie=UTF-8&tl=he&client=tw-ob&q=${encodeURIComponent(clean)}`;
+    // Remove nikud + cantillation (U+0591–U+05C7)
+    const cleanText = verseText.replace(/[\u0591-\u05C7]/g, '');
 
-    const audio = new Audio(url);
-    audioRef.current = audio;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang  = 'he-IL';
+    utterance.rate  = 0.9;
+    utterance.onend   = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
 
-    audio.onended = () => { audioRef.current = null; setSpeaking(false); };
-    audio.onerror = () => { audioRef.current = null; setSpeaking(false); };
-
-    // play() returns a Promise — catch any autoplay rejection
-    audio.play().catch(err => {
-      console.error('Audio play error:', err);
-      audioRef.current = null;
-      setSpeaking(false);
-    });
-
+    window.speechSynthesis.speak(utterance);
     setSpeaking(true);
   };
 
   const currentBook  = getBookByEnglish(book);
-  const ttsAvailable = true; // Google TTS works everywhere
+  const ttsAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   const ctrlBtn = (active = false) => [
     'flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm transition-colors',
