@@ -43,11 +43,13 @@ function htmlToPlainText(html: string): string {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function getBookIndex(englishName: string): Promise<number[]> {
-  const res = await fetch(`https://www.sefaria.org/api/index/${englishName}`);
-  if (!res.ok) throw new Error(`Failed to fetch index: ${englishName}`);
-  const data: SefariaIndexResponse = await res.json();
-  if (data.schema.lengths) return data.schema.lengths;
-  if (data.schema.length) return [data.schema.length];
+  // /api/shape returns [{chapters: [verses_per_chapter, ...]}, ...]
+  // This is the correct endpoint for per-chapter verse counts.
+  const res = await fetch(`https://www.sefaria.org/api/shape/${englishName}`);
+  if (!res.ok) throw new Error(`Failed to fetch shape: ${englishName}`);
+  const data = await res.json();
+  const entry = Array.isArray(data) ? data[0] : data;
+  if (Array.isArray(entry?.chapters)) return entry.chapters as number[];
   return [];
 }
 
