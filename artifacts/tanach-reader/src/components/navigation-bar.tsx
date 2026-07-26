@@ -18,21 +18,23 @@ interface NavigationBarProps {
 }
 
 // ── Unified "book / parasha" option values ────────────────────────────────────
-// Books:     "b:Genesis"
-// Parashiyot: "p:Genesis:0"
+// Non-Torah books: "b:Joshua"
+// Parashiyot:      "p:Genesis:0"
+//
+// Structure: one group per Torah book (header = book name, options = its parashiyot),
+// then Nevi'im and Ketuvim as flat book groups.
+const torahBooks = TANACH_BOOKS.filter(b => b.section === 'Torah');
+
 const combinedGroups = [
-  {
-    label: 'תורה',
-    options: TANACH_BOOKS
-      .filter(b => b.section === 'Torah')
-      .map(b => ({ value: `b:${b.english}`, label: b.hebrew })),
-  },
-  {
-    label: 'פרשות השבוע',
-    options: Object.entries(PARASHIYOT).flatMap(([bookEng, parshas]) =>
-      parshas.map((p, i) => ({ value: `p:${bookEng}:${i}`, label: p.hebrew }))
-    ),
-  },
+  // Five Torah books — each becomes its own group, parashiyot are the options
+  ...torahBooks.map(b => ({
+    label: b.hebrew,   // group header = book name (non-clickable)
+    options: (PARASHIYOT[b.english] ?? []).map((p, i) => ({
+      value: `p:${b.english}:${i}`,
+      label: p.hebrew,          // parasha name with nikud, visually distinct from the plain book header
+    })),
+  })),
+  // Nevi'im and Ketuvim — flat book lists
   {
     label: 'נביאים',
     options: TANACH_BOOKS
