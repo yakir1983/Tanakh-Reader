@@ -82,13 +82,26 @@ export default function Home() {
   const isAtEnd   = chapter === chapterCount && verse === verseCount;
 
   // ── Voice search callback ─────────────────────────────────────────────────
+  // All three setters are called together → React 18 batches into one render.
+  // The queries react to the new [book, chapter, verse] key immediately.
   const handleVoice = useCallback(
     (b?: TanachBook, c?: number, v?: number) => {
-      if (b) { setBook(b.english); setChapter(c && c >= 1 ? c : 1); setVerse(v && v >= 1 ? v : 1); return; }
-      if (c && c >= 1 && c <= chapterCount) { setChapter(c); setVerse(1); }
-      if (v && v >= 1 && v <= verseCount)   setVerse(v);
+      const newBook    = b?.english;
+      const newChapter = (c && c >= 1) ? c : 1;
+      const newVerse   = (v && v >= 1) ? v : 1;
+
+      if (newBook) {
+        // New book found — reset all three at once
+        setBook(newBook);
+        setChapter(newChapter);
+        setVerse(newVerse);
+      } else {
+        // Only chapter / verse mentioned — update within current book
+        if (c && c >= 1) { setChapter(c); setVerse(newVerse); }
+        else if (v && v >= 1) setVerse(v);
+      }
     },
-    [chapterCount, verseCount],
+    [], // no external deps — setters are stable references
   );
 
   const currentBook = getBookByEnglish(book);
