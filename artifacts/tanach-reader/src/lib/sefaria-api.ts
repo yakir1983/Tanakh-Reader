@@ -16,89 +16,46 @@ interface SefariaTextResponse {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Decode common HTML entities before DOM parsing */
-function decodeEntities(html: string): string {
-  return html
-    .replace(/&amp;/g,  '&')
-    .replace(/&lt;/g,   '<')
-    .replace(/&gt;/g,   '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g,  "'")
-    .replace(/&nbsp;/g, '\u00A0')
-    .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(+n));
-}
-
 /**
- * Use the browser DOM to safely extract text from an HTML fragment.
- * This avoids any manual regex / string-slice on Hebrew Unicode.
- */
-function domText(html: string): string {
-  const el = document.createElement('span');
-  el.innerHTML = decodeEntities(html);
-  return el.textContent ?? '';
-}
-
-/**
- * Recursively flatten Sefaria's nested arrays into raw HTML strings.
- * Preserves all markup so parseDibur can use the DOM to extract structure.
+ * Recursively flatten Sefaria nested arrays into flat string[].
+ * Each string may contain raw HTML (e.g. <b>word</b> commentary…).
+ * We do NOT touch the content — callers decide what to do with it.
  */
 function flattenRaw(data: SefariaHe): string[] {
   if (typeof data === 'string') {
-    const trimmed = data.trim();
-    return trimmed ? [trimmed] : [];
+    const t = data.trim();
+    return t ? [t] : [];
   }
-  if (Array.isArray(data)) {
-    return data.flatMap(item => flattenRaw(item));
-  }
+  if (Array.isArray(data)) return data.flatMap(flattenRaw);
   return [];
 }
 
-// ── Rashi dibur structure ────────────────────────────────────────────────────
-
-export interface RashiDibur {
-  /** The "dibur hamatchil" opening word(s), unvocalised */
-  heading: string;
-  /** Rashi's commentary on that phrase, with full nikud */
-  commentary: string;
-}
-
 /**
- * Parse a single Sefaria Rashi HTML segment, e.g.:
- *   "<b>תהו ובהו.</b> תֹּהוּ לְשׁוֹן תֵּמַהּ..."
- *
- * Uses DOMParser so Hebrew letters and nikud are never touched by regex.
+ * Extract plain text from an HTML string using the browser DOM.
+ * Never touches Hebrew letters or nikud with regex.
  */
-function parseDibur(rawHtml: string): RashiDibur | null {
-  // Wrap in a span so the DOM treats it as a fragment
-  const span = document.createElement('span');
-  span.innerHTML = decodeEntities(rawHtml);
-
-  // Pull the bold heading element
-  const boldEl = span.querySelector('b, strong');
-  let heading = '';
-  if (boldEl) {
-    heading = (boldEl.textContent ?? '').replace(/[.,:;]+$/, '').trim();
-    boldEl.remove();          // remove from span so we get only the rest
-  }
-
-  // Everything left in the span is the commentary
-  const commentary = (span.textContent ?? '').replace(/^\s*[.,:;]\s*/, '').trim();
-
-  if (!heading && !commentary) return null;
-  return { heading, commentary };
+function htmlToPlainText(html: string): string {
+  const el = document.createElement('span');
+  el.innerHTML = html;
+  return el.textContent ?? '';
 }
 
-// ── Public API ───────────────────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function getBookIndex(englishName: string): Promise<number[]> {
   const res = await fetch(`https://www.sefaria.org/api/index/${englishName}`);
   if (!res.ok) throw new Error(`Failed to fetch index: ${englishName}`);
   const data: SefariaIndexResponse = await res.json();
   if (data.schema.lengths) return data.schema.lengths;
-  if (data.schema.length)  return [data.schema.length];
+  if (data.schema.length) return [data.schema.length];
   return [];
 }
 
+/**
+ * Fetch the Hebrew text of a single verse.
+ * Returns plain text (nikud preserved, cantillation stripped so
+ * Frank Ruhl Libre doesn't show boxes for unsupported glyphs).
+ */
 export async function getVerseText(
   englishName: string,
   chapter: number,
@@ -110,35 +67,47 @@ export async function getVerseText(
   const data: SefariaTextResponse = await res.json();
 
   const segments = flattenRaw(data.he);
-  if (segments.length === 0) return '';
+  if (!segments.length) return '';
 
-  // Use DOM to safely extract plain text, then strip cantillation marks
-  // (U+0591–U+05AF = taamei mikra). Frank Ruhl Libre lacks those glyphs
-  // so they render as boxes. Nikud (U+05B0–U+05C7) is kept.
-  const text = domText(segments[0]);
-  return text.replace(/[\u0591-\u05AF]/g, '');
+  // Use DOM to safely get text content (strips any HTML tags from verse)
+  const plain = htmlToPlainText(segments[0]);
+  // Strip cantillation marks (U+0591–U+05AF) — Frank Ruhl Libre lacks those glyphs
+  // Nikud (U+05B0–U+05C7) is preserved
+  return plain.replace(/[\u0591-\u05AF]/g, '');
 }
 
 /**
- * Fetch Rashi commentary for a specific verse and return it as
- * an array of structured diburim, each with a bold heading and commentary.
+ * Fetch Rashi commentary for a verse and return raw HTML segments.
+ *
+ * Each segment is a string like:
+ *   "<b>בראשית.</b> אָמַר רַבִּי יִצְחָק…"
+ *
+ * We return them as-is so the UI can render with dangerouslySetInnerHTML
+ * — zero string manipulation, zero risk of breaking Hebrew Unicode.
  */
-export async function getRashiDiburim(
+export async function getRashiSegments(
   englishName: string,
   chapter: number,
   verse: number
-): Promise<RashiDibur[]> {
-  const url =
-    `https://www.sefaria.org/api/texts/Rashi_on_${englishName}.${chapter}.${verse}?lang=he`;
+): Promise<string[]> {
+  const url = `https://www.sefaria.org/api/texts/Rashi_on_${englishName}.${chapter}.${verse}?lang=he`;
   try {
     const res = await fetch(url);
     if (!res.ok) return [];
     const data: SefariaTextResponse = await res.json();
-
-    return flattenRaw(data.he)
-      .map(parseDibur)
-      .filter((d): d is RashiDibur => d !== null);
+    return flattenRaw(data.he).filter(s => s.length > 0);
   } catch {
     return [];
   }
+}
+
+/**
+ * Extract plain text from Rashi HTML segments (for TTS).
+ */
+export function rashiSegmentsToPlainText(segments: string[]): string {
+  return segments
+    .map(htmlToPlainText)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion';
-import type { RashiDibur } from '@/lib/sefaria-api';
 
 interface RashiCommentaryProps {
-  diburim: RashiDibur[];
+  /** Raw HTML segments from Sefaria, each one dibur: "<b>word.</b> commentary…" */
+  segments: string[];
   isLoading?: boolean;
 }
 
-export function RashiCommentary({ diburim, isLoading }: RashiCommentaryProps) {
+export function RashiCommentary({ segments, isLoading }: RashiCommentaryProps) {
   if (isLoading) {
     return (
       <div className="w-full max-w-3xl mx-auto px-4 mt-10 space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="rounded-xl border border-primary/20 bg-card p-5 space-y-2 animate-pulse">
+          <div
+            key={i}
+            className="rounded-xl border border-primary/20 bg-card p-5 space-y-2 animate-pulse"
+          >
             <div className="h-5 w-28 bg-muted/50 rounded mr-auto" />
             <div className="h-4 w-full bg-muted/30 rounded" />
             <div className="h-4 w-4/5 bg-muted/30 rounded" />
@@ -35,40 +38,29 @@ export function RashiCommentary({ diburim, isLoading }: RashiCommentaryProps) {
         פירוש רש״י
       </h2>
 
-      {diburim.length > 0 ? (
-        <div className="space-y-4" dir="rtl" data-testid="text-rashi-content">
-          {diburim.map((dibur, i) => (
+      {segments.length > 0 ? (
+        <div className="space-y-3" dir="rtl" data-testid="text-rashi-content">
+          {segments.map((html, i) => (
             <motion.div
               key={i}
-              className="rounded-xl border border-primary/20 bg-card px-5 py-4 text-right shadow-sm"
+              className={[
+                'rounded-xl border border-primary/20 bg-card px-5 py-4 text-right shadow-sm',
+                // style <b> (dibur hamatchil) inside each card
+                '[&_b]:font-bold [&_b]:text-primary [&_b]:text-[1.05em]',
+              ].join(' ')}
               style={{
+                fontFamily: 'Frank Ruhl Libre, serif',
+                fontSize: '1rem',
+                lineHeight: '1.9',
                 backgroundImage:
                   'linear-gradient(160deg, hsl(var(--primary)/0.04), hsl(var(--primary)/0.10))',
               }}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
-            >
-              {/* Dibur hamatchil — bold heading */}
-              {dibur.heading && (
-                <p
-                  className="text-base font-bold text-foreground mb-2 leading-normal"
-                  style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
-                >
-                  {dibur.heading}
-                </p>
-              )}
-
-              {/* Commentary with nikud */}
-              {dibur.commentary && (
-                <p
-                  className="text-base leading-loose text-foreground/90"
-                  style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
-                >
-                  {dibur.commentary}
-                </p>
-              )}
-            </motion.div>
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+              // Render Sefaria HTML as-is — <b> tags intact, no text manipulation
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
           ))}
         </div>
       ) : (

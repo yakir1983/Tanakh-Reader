@@ -1,57 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Moon, Sun, AArrowUp, AArrowDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+  Moon, Sun, AArrowUp, AArrowDown,
+  ChevronRight, ChevronLeft, Volume2, VolumeX,
+} from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
-import { getBookIndex, getVerseText, getRashiDiburim } from '@/lib/sefaria-api';
-import { getBookByEnglish, getBookByHebrew } from '@/lib/tanach-data';
+import {
+  getBookIndex,
+  getVerseText,
+  getRashiSegments,
+  rashiSegmentsToPlainText,
+} from '@/lib/sefaria-api';
+import { getBookByEnglish } from '@/lib/tanach-data';
+import type { TanachBook } from '@/lib/tanach-data';
 
-const FONT_SIZE_MIN = 2.5;
-const FONT_SIZE_MAX = 8;
-const FONT_SIZE_STEP = 0.5;
+const FONT_SIZE_MIN     = 2.5;
+const FONT_SIZE_MAX     = 8;
+const FONT_SIZE_STEP    = 0.5;
 const FONT_SIZE_DEFAULT = 5;
 
 export default function Home() {
-  const [selectedBook, setSelectedBook] = useState<string>('Genesis');
+  const [selectedBook,    setSelectedBook]    = useState<string>('Genesis');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
-  const [selectedVerse, setSelectedVerse] = useState<number>(1);
-  const [isDark, setIsDark] = useState(false);
-  const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
+  const [selectedVerse,   setSelectedVerse]   = useState<number>(1);
+  const [isDark,          setIsDark]          = useState(false);
+  const [fontSize,        setFontSize]        = useState(FONT_SIZE_DEFAULT);
+  const [isSpeaking,      setIsSpeaking]      = useState(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Sync dark mode class on <html>
+  // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
+  // ── Data queries ─────────────────────────────────────────────────────────
   const { data: bookIndex } = useQuery({
     queryKey: ['book-index', selectedBook],
-    queryFn: () => getBookIndex(selectedBook),
-    enabled: !!selectedBook,
+    queryFn:  () => getBookIndex(selectedBook),
+    enabled:  !!selectedBook,
     staleTime: Infinity,
   });
 
   const chapterCount = bookIndex?.length ?? 0;
-  const verseCount =
-    selectedChapter && bookIndex ? bookIndex[selectedChapter - 1] ?? 0 : 0;
+  const verseCount   = bookIndex?.[selectedChapter - 1] ?? 0;
 
   const { data: verseText, isLoading: isLoadingVerse } = useQuery({
     queryKey: ['verse', selectedBook, selectedChapter, selectedVerse],
-    queryFn: () => getVerseText(selectedBook, selectedChapter, selectedVerse),
-    enabled: !!selectedBook && !!selectedChapter && !!selectedVerse,
+    queryFn:  () => getVerseText(selectedBook, selectedChapter, selectedVerse),
+    enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
   });
 
-  const { data: rashiDiburim, isLoading: isLoadingRashi } = useQuery({
+  const { data: rashiSegments, isLoading: isLoadingRashi } = useQuery({
     queryKey: ['rashi', selectedBook, selectedChapter, selectedVerse],
-    queryFn: () => getRashiDiburim(selectedBook, selectedChapter, selectedVerse),
-    enabled: !!selectedBook && !!selectedChapter && !!selectedVerse,
+    queryFn:  () => getRashiSegments(selectedBook, selectedChapter, selectedVerse),
+    enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
   });
 
+  // ── Reset chapter/verse when book changes ────────────────────────────────
   useEffect(() => {
     setSelectedChapter(1);
     setSelectedVerse(1);
@@ -61,17 +69,33 @@ export default function Home() {
     setSelectedVerse(1);
   }, [selectedChapter]);
 
-  const handleVoiceReference = (book?: string, chapter?: number, verse?: number) => {
-    if (book) {
-      const matchedBook = getBookByHebrew(book);
-      if (matchedBook) setSelectedBook(matchedBook.english);
-    }
-    if (chapter && chapter >= 1 && chapter <= chapterCount) setSelectedChapter(chapter);
-    if (verse && verse >= 1 && verse <= verseCount) setSelectedVerse(verse);
-  };
+  // ── Stop TTS when verse changes ──────────────────────────────────────────
+  useEffect(() => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }, [selectedBook, selectedChapter, selectedVerse]);
 
+  // ── Voice-search callback ────────────────────────────────────────────────
+  const handleVoiceReference = useCallback(
+    (book?: TanachBook, chapter?: number, verse?: number) => {
+      if (book) {
+        setSelectedBook(book.english);
+        // Chapter/verse are validated after new bookIndex loads
+        if (chapter && chapter >= 1) setSelectedChapter(chapter);
+        if (verse   && verse   >= 1) setSelectedVerse(verse);
+      } else {
+        if (chapter && chapter >= 1 && chapter <= chapterCount)
+          setSelectedChapter(chapter);
+        if (verse   && verse   >= 1 && verse   <= verseCount)
+          setSelectedVerse(verse);
+      }
+    },
+    [chapterCount, verseCount]
+  );
+
+  // ── Navigation ───────────────────────────────────────────────────────────
   const goNext = () => {
-    if (verseCount === 0) return;
+    if (!verseCount) return;
     if (selectedVerse < verseCount) {
       setSelectedVerse(v => v + 1);
     } else if (selectedChapter < chapterCount) {
@@ -84,21 +108,55 @@ export default function Home() {
     if (selectedVerse > 1) {
       setSelectedVerse(v => v - 1);
     } else if (selectedChapter > 1) {
-      const prevChapterVerses = bookIndex ? bookIndex[selectedChapter - 2] ?? 1 : 1;
+      const prev = bookIndex?.[selectedChapter - 2] ?? 1;
       setSelectedChapter(c => c - 1);
-      setSelectedVerse(prevChapterVerses);
+      setSelectedVerse(prev);
     }
   };
 
   const isAtStart = selectedChapter === 1 && selectedVerse === 1;
-  const isAtEnd = selectedChapter === chapterCount && selectedVerse === verseCount;
+  const isAtEnd   = selectedChapter === chapterCount && selectedVerse === verseCount;
+
+  // ── Text-to-Speech ───────────────────────────────────────────────────────
+  const toggleTTS = () => {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    if (isSpeaking) {
+      synth.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const currentBook = getBookByEnglish(selectedBook);
+    const rashiPlain  = rashiSegmentsToPlainText(rashiSegments ?? []);
+    const fullText = [
+      currentBook?.hebrew,
+      `פרק ${selectedChapter} פסוק ${selectedVerse}`,
+      verseText ?? '',
+      rashiPlain ? `פירוש רש״י: ${rashiPlain}` : '',
+    ]
+      .filter(Boolean)
+      .join('. ');
+
+    const utt = new SpeechSynthesisUtterance(fullText);
+    utt.lang = 'he-IL';
+    utt.rate = 0.85;
+    utt.onend  = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
+    utteranceRef.current = utt;
+    synth.speak(utt);
+    setIsSpeaking(true);
+  };
+
   const currentBook = getBookByEnglish(selectedBook);
+  const ttsAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   return (
     <div className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300">
       <div className="container mx-auto py-8 sm:py-12 space-y-10 max-w-4xl">
 
-        {/* ── Header ─────────────────────────────────────────────── */}
+        {/* ── Header ──────────────────────────────────────────────── */}
         <header className="text-center space-y-2">
           <h1
             className="text-4xl sm:text-5xl font-bold text-primary"
@@ -118,7 +176,7 @@ export default function Home() {
               disabled={fontSize <= FONT_SIZE_MIN}
               data-testid="button-font-decrease"
               title="הקטן פונט"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <AArrowDown className="w-4 h-4" /><span>A</span>
             </button>
@@ -127,10 +185,28 @@ export default function Home() {
               disabled={fontSize >= FONT_SIZE_MAX}
               data-testid="button-font-increase"
               title="הגדל פונט"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-bold transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <AArrowUp className="w-4 h-4" /><span>A</span>
             </button>
+
+            <div className="w-px h-5 bg-border" />
+
+            {/* TTS button */}
+            {ttsAvailable && (
+              <button
+                onClick={toggleTTS}
+                disabled={!verseText}
+                data-testid="button-tts"
+                title={isSpeaking ? 'עצור הקראה' : 'הקרא בקול'}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {isSpeaking
+                  ? <VolumeX className="w-4 h-4 text-primary" />
+                  : <Volume2 className="w-4 h-4" />}
+                <span dir="rtl">{isSpeaking ? 'עצור' : 'הקרא'}</span>
+              </button>
+            )}
 
             <div className="w-px h-5 bg-border" />
 
@@ -138,7 +214,7 @@ export default function Home() {
               onClick={() => setIsDark(d => !d)}
               data-testid="button-dark-mode-toggle"
               title={isDark ? 'מצב יום' : 'מצב לילה'}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-foreground text-sm transition-colors hover:bg-accent"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               <span dir="rtl">{isDark ? 'יום' : 'לילה'}</span>
@@ -146,7 +222,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* ── Navigation dropdowns ────────────────────────────────── */}
+        {/* ── Dropdowns ───────────────────────────────────────────── */}
         <NavigationBar
           selectedBook={selectedBook}
           selectedChapter={selectedChapter}
@@ -163,7 +239,7 @@ export default function Home() {
           <VoiceSearchButton onReferenceDetected={handleVoiceReference} />
         </div>
 
-        {/* ── Verse display ────────────────────────────────────────── */}
+        {/* ── Verse ───────────────────────────────────────────────── */}
         <VerseDisplay
           bookHebrew={currentBook?.hebrew ?? ''}
           chapter={selectedChapter}
@@ -173,19 +249,16 @@ export default function Home() {
           fontSize={fontSize}
         />
 
-        {/* ── Rashi commentary ─────────────────────────────────────── */}
+        {/* ── Rashi ───────────────────────────────────────────────── */}
         {!isLoadingVerse && (
           <RashiCommentary
-            diburim={rashiDiburim ?? []}
+            segments={rashiSegments ?? []}
             isLoading={isLoadingRashi}
           />
         )}
 
-        {/* ── Bottom navigation arrows ──────────────────────────────
-              RTL layout: ChevronRight = "previous" (right side),
-                          ChevronLeft  = "next"     (left side)    */}
+        {/* ── Prev / Next ─────────────────────────────────────────── */}
         <div className="flex items-center justify-center gap-6 pb-12" dir="rtl">
-          {/* Previous verse — right in RTL */}
           <button
             onClick={goPrev}
             disabled={isAtStart}
@@ -196,8 +269,6 @@ export default function Home() {
             <ChevronRight className="w-7 h-7" />
             <span>פסוק קודם</span>
           </button>
-
-          {/* Next verse — left in RTL */}
           <button
             onClick={goNext}
             disabled={isAtEnd}
