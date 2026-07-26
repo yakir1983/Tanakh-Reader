@@ -29,7 +29,8 @@ export default function Home() {
   const [isDark,          setIsDark]          = useState(false);
   const [fontSize,        setFontSize]        = useState(FONT_SIZE_DEFAULT);
   const [isSpeaking,      setIsSpeaking]      = useState(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const utteranceRef  = useRef<SpeechSynthesisUtterance | null>(null);
+  const ttsLockRef    = useRef(false);   // guard against double-tap race
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -122,15 +123,26 @@ export default function Home() {
   const isAtEnd   = selectedChapter === chapterCount && selectedVerse === verseCount;
 
   // ── Text-to-Speech ───────────────────────────────────────────────────────
+  const stopTTS = () => {
+    window.speechSynthesis?.cancel();
+    utteranceRef.current = null;
+    ttsLockRef.current = false;
+    setIsSpeaking(false);
+  };
+
   const toggleTTS = () => {
     const synth = window.speechSynthesis;
     if (!synth) return;
 
-    if (isSpeaking) {
-      synth.cancel();
-      setIsSpeaking(false);
-      return;
-    }
+    // Stop if already speaking
+    if (isSpeaking) { stopTTS(); return; }
+
+    // Guard against rapid double-tap
+    if (ttsLockRef.current) return;
+    ttsLockRef.current = true;
+
+    // Always cancel any lingering speech before starting (iOS quirk)
+    synth.cancel();
 
     const currentBook = getBookByEnglish(selectedBook);
     const rashiPlain  = rashiSegmentsToPlainText(rashiSegments ?? []);
@@ -144,13 +156,15 @@ export default function Home() {
       .join('. ');
 
     const utt = new SpeechSynthesisUtterance(fullText);
-    utt.lang = 'he-IL';
-    utt.rate = 0.85;
-    utt.onend  = () => setIsSpeaking(false);
-    utt.onerror = () => setIsSpeaking(false);
+    utt.lang   = 'he-IL';
+    utt.rate   = 0.85;
+    utt.onstart = () => { ttsLockRef.current = false; setIsSpeaking(true); };
+    utt.onend   = () => stopTTS();
+    utt.onerror = () => stopTTS();
     utteranceRef.current = utt;
-    synth.speak(utt);
-    setIsSpeaking(true);
+
+    // Small delay lets iOS flush the cancel() before speak()
+    setTimeout(() => { synth.speak(utt); }, 50);
   };
 
   const currentBook = getBookByEnglish(selectedBook);
