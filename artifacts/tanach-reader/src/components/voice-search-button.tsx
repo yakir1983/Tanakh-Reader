@@ -1,149 +1,106 @@
-import { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  isSpeechRecognitionSupported,
-  createHebrewSpeechRecognition,
-  parseHebrewReference,
-  type SpeechRecognitionResult,
-} from '@/lib/speech-recognition';
+/**
+ * Voice search button — uses webkitSpeechRecognition (he-IL).
+ * On result: parses the transcript and calls onReferenceDetected.
+ */
+import { useState } from 'react';
+import { Mic, MicOff } from 'lucide-react';
+import { parseHebrewReference } from '@/lib/speech-recognition';
 import type { TanachBook } from '@/lib/tanach-data';
 
-interface VoiceSearchButtonProps {
+interface Props {
   onReferenceDetected: (book?: TanachBook, chapter?: number, verse?: number) => void;
 }
 
-export function VoiceSearchButton({ onReferenceDetected }: VoiceSearchButtonProps) {
-  const [isListening, setIsListening] = useState(false);
-  const [feedback, setFeedback]       = useState('');
-  const [permError, setPermError]     = useState(false);
-  const recognitionRef = useRef<any>(null);
-  const feedbackTimer  = useRef<ReturnType<typeof setTimeout>>();
+const SpeechRecognitionAPI =
+  typeof window !== 'undefined'
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : null;
 
-  const isSupported = isSpeechRecognitionSupported();
+export function VoiceSearchButton({ onReferenceDetected }: Props) {
+  const [listening,  setListening]  = useState(false);
+  const [status,     setStatus]     = useState('');   // feedback text
+  const [supported]                 = useState(() => !!SpeechRecognitionAPI);
 
-  function showFeedback(msg: string, durationMs = 5000) {
-    setFeedback(msg);
-    clearTimeout(feedbackTimer.current);
-    feedbackTimer.current = setTimeout(() => setFeedback(''), durationMs);
-  }
+  const handleClick = () => {
+    if (!supported) {
+      alert('הדפדפן אינו תומך בזיהוי קולי. מומלץ להשתמש ב-Chrome.');
+      return;
+    }
 
-  useEffect(() => {
-    if (!isSupported) return;
+    if (listening) return; // already going, ignore double-tap
 
-    const handleResult = (result: SpeechRecognitionResult) => {
-      setIsListening(false);
-      const parsed = parseHebrewReference(result.transcript);
-      showFeedback(`שמעתי: "${result.transcript}"`);
-      if (parsed.book || parsed.chapter || parsed.verse) {
-        onReferenceDetected(parsed.book, parsed.chapter, parsed.verse);
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang            = 'he-IL';
+    recognition.interimResults  = false;
+    recognition.maxAlternatives = 3;
+
+    recognition.onstart = () => {
+      setListening(true);
+      setStatus('מקשיב… דבר עכשיו');
+    };
+
+    recognition.onresult = (event: any) => {
+      setListening(false);
+
+      // Pick the alternative that contains a recognisable book name, else use first
+      let bestTranscript = event.results[0][0].transcript;
+      for (let i = 0; i < event.results[0].length; i++) {
+        const t = event.results[0][i].transcript;
+        const parsed = parseHebrewReference(t);
+        if (parsed.book) { bestTranscript = t; break; }
+      }
+
+      setStatus(`שמעתי: "${bestTranscript}"`);
+      setTimeout(() => setStatus(''), 5000);
+
+      const { book, chapter, verse } = parseHebrewReference(bestTranscript);
+      if (book || chapter || verse) {
+        onReferenceDetected(book, chapter, verse);
       }
     };
 
-    const handleError = (error: string) => {
-      setIsListening(false);
-      if (error === 'not-allowed' || error === 'permission-denied') {
-        setPermError(true);
-        showFeedback('נא לאפשר גישה למיקרופון בהגדרות הדפדפן', 8000);
-      } else if (error === 'no-speech') {
-        showFeedback('לא זוהה דיבור — נסה שוב');
+    recognition.onerror = (event: any) => {
+      setListening(false);
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        setStatus('נא לאפשר גישה למיקרופון');
+      } else if (event.error === 'no-speech') {
+        setStatus('לא זוהה דיבור — נסה שוב');
       } else {
-        showFeedback(`שגיאה: ${error}`);
+        setStatus(`שגיאה: ${event.error}`);
       }
+      setTimeout(() => setStatus(''), 5000);
     };
 
-    recognitionRef.current = createHebrewSpeechRecognition(handleResult, handleError);
-    return () => clearTimeout(feedbackTimer.current);
-  }, [isSupported, onReferenceDetected]);
+    recognition.onend = () => setListening(false);
 
-  const toggleListening = async () => {
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      setFeedback('');
-      return;
-    }
-
-    // Explicitly request mic permission so the browser shows the native prompt
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      setPermError(false);
-    } catch {
-      setPermError(true);
-      showFeedback('נא לאפשר גישה למיקרופון בהגדרות הדפדפן', 8000);
-      return;
-    }
-
-    try {
-      recognitionRef.current.start();
-      setIsListening(true);
-      showFeedback('מקשיב... דבר עכשיו', 10000);
-    } catch {
-      showFeedback('לא ניתן להפעיל זיהוי קול');
-    }
+    recognition.start();
   };
-
-  if (!isSupported) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="lg"
-            variant="outline"
-            disabled
-            data-testid="button-voice-search-disabled"
-            className="w-28 h-28 rounded-full bg-muted border-2 border-muted-foreground/20 opacity-40"
-          >
-            <MicOff className="w-10 h-10 text-muted-foreground" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>הדפדפן לא תומך בזיהוי קול</p>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={toggleListening}
-            data-testid="button-voice-search"
-            className={[
-              'w-28 h-28 rounded-full transition-all duration-300',
-              isListening
-                ? 'bg-primary/20 border-4 border-primary animate-pulse'
-                : permError
-                  ? 'bg-destructive/10 border-2 border-destructive/40 hover:border-destructive'
-                  : 'bg-card border-2 border-primary/40 hover:border-primary hover:bg-primary/10',
-            ].join(' ')}
-          >
-            {isListening ? (
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            ) : (
-              <Mic className={`w-10 h-10 ${permError ? 'text-destructive/70' : 'text-primary/80'}`} />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent dir="rtl">
-          <p>{isListening ? 'לחץ לעצירה' : 'חיפוש קולי — אמור למשל: "בראשית פרק א פסוק א"'}</p>
-        </TooltipContent>
-      </Tooltip>
+      <button
+        onClick={handleClick}
+        data-testid="button-voice-search"
+        title="חיפוש קולי — אמור למשל: תהילים פרק א פסוק א"
+        className={[
+          'w-24 h-24 rounded-full border-2 transition-all duration-200',
+          'flex items-center justify-center',
+          listening
+            ? 'bg-primary/20 border-primary animate-pulse scale-110'
+            : supported
+              ? 'bg-card border-primary/40 hover:border-primary hover:bg-primary/10 active:scale-95'
+              : 'bg-muted border-muted-foreground/20 opacity-40 cursor-not-allowed',
+        ].join(' ')}
+      >
+        {supported
+          ? <Mic className={`w-9 h-9 ${listening ? 'text-primary' : 'text-primary/70'}`} />
+          : <MicOff className="w-9 h-9 text-muted-foreground" />}
+      </button>
 
-      {feedback && (
-        <p
-          className="text-center text-sm text-muted-foreground max-w-xs px-2"
-          data-testid="text-voice-feedback"
-          dir="rtl"
-        >
-          {feedback}
+      {status && (
+        <p className="text-sm text-muted-foreground text-center max-w-xs px-2" dir="rtl"
+          data-testid="text-voice-feedback">
+          {status}
         </p>
       )}
     </div>
