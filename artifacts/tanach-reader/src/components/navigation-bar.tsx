@@ -75,26 +75,32 @@ export function NavigationBar({
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-sm mx-auto px-4">
-      {/* Book */}
-      <CustomSelect
-        testId="select-book"
-        value={selectedBook}
-        groups={bookGroups}
-        onChange={onBookChange}
-      />
+      {/* Book + Parasha row */}
+      <div className="flex gap-2" dir="rtl">
+        <div className={parashaOptions ? 'flex-1 min-w-0' : 'w-full'}>
+          <CustomSelect
+            testId="select-book"
+            value={selectedBook}
+            groups={bookGroups}
+            onChange={onBookChange}
+          />
+        </div>
 
-      {/* Parasha (Torah only) */}
-      {parashaOptions && activeParashaIndex !== null && (
-        <CustomSelect
-          testId="select-parasha"
-          value={String(activeParashaIndex)}
-          options={parashaOptions}
-          onChange={v => {
-            const p = parashiyot![Number(v)];
-            if (p) onParashaChange(p.chapter, p.verse);
-          }}
-        />
-      )}
+        {/* Parasha (Torah only) — sits next to book in same row */}
+        {parashaOptions && activeParashaIndex !== null && (
+          <div className="flex-1 min-w-0">
+            <CustomSelect
+              testId="select-parasha"
+              value={String(activeParashaIndex)}
+              options={parashaOptions}
+              onChange={v => {
+                const p = parashiyot![Number(v)];
+                if (p) onParashaChange(p.chapter, p.verse);
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Chapter */}
       <CustomSelect
