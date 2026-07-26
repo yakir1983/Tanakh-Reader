@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { CustomSelect } from '@/components/custom-select';
 import { TANACH_BOOKS } from '@/lib/tanach-data';
 import { toHebrewNumeral } from '@/lib/hebrew-numerals';
-import { getParashiyot } from '@/lib/parashiyot';
+import { PARASHIYOT } from '@/lib/parashiyot';
 
 interface NavigationBarProps {
   selectedBook: string;
@@ -13,14 +13,38 @@ interface NavigationBarProps {
   onBookChange: (book: string) => void;
   onChapterChange: (chapter: number) => void;
   onVerseChange: (verse: number) => void;
-  /** Called when user picks a parasha; sets both chapter and verse at once. */
-  onParashaChange: (chapter: number, verse: number) => void;
+  /** Called when user picks a parasha — includes the book so Torah → Torah navigation works. */
+  onParashaChange: (englishBook: string, chapter: number, verse: number) => void;
 }
 
-const bookGroups = [
-  { label: 'תורה',    options: TANACH_BOOKS.filter(b => b.section === 'Torah').map(b => ({ value: b.english, label: b.hebrew })) },
-  { label: 'נביאים', options: TANACH_BOOKS.filter(b => b.section === "Nevi'im").map(b => ({ value: b.english, label: b.hebrew })) },
-  { label: 'כתובים', options: TANACH_BOOKS.filter(b => b.section === 'Ketuvim').map(b => ({ value: b.english, label: b.hebrew })) },
+// ── Unified "book / parasha" option values ────────────────────────────────────
+// Books:     "b:Genesis"
+// Parashiyot: "p:Genesis:0"
+const combinedGroups = [
+  {
+    label: 'תורה',
+    options: TANACH_BOOKS
+      .filter(b => b.section === 'Torah')
+      .map(b => ({ value: `b:${b.english}`, label: b.hebrew })),
+  },
+  {
+    label: 'פרשות השבוע',
+    options: Object.entries(PARASHIYOT).flatMap(([bookEng, parshas]) =>
+      parshas.map((p, i) => ({ value: `p:${bookEng}:${i}`, label: p.hebrew }))
+    ),
+  },
+  {
+    label: 'נביאים',
+    options: TANACH_BOOKS
+      .filter(b => b.section === "Nevi'im")
+      .map(b => ({ value: `b:${b.english}`, label: b.hebrew })),
+  },
+  {
+    label: 'כתובים',
+    options: TANACH_BOOKS
+      .filter(b => b.section === 'Ketuvim')
+      .map(b => ({ value: `b:${b.english}`, label: b.hebrew })),
+  },
 ];
 
 export function NavigationBar({
@@ -34,18 +58,8 @@ export function NavigationBar({
   onVerseChange,
   onParashaChange,
 }: NavigationBarProps) {
-  // ── Parashiyot (Torah only) ──────────────────────────────────────────────
-  const parashiyot = useMemo(() => getParashiyot(selectedBook), [selectedBook]);
-
-  const parashaOptions = useMemo(() => {
-    if (!parashiyot) return null;
-    return parashiyot.map((p, i) => ({
-      value: String(i),
-      label: p.hebrew,
-    }));
-  }, [parashiyot]);
-
-  // Determine which parasha is currently active (last one whose chapter ≤ selectedChapter)
+  // Determine which parasha is active (for Torah books)
+  const parashiyot = PARASHIYOT[selectedBook] ?? null;
   const activeParashaIndex = useMemo(() => {
     if (!parashiyot) return null;
     let best = 0;
@@ -56,7 +70,27 @@ export function NavigationBar({
     return best;
   }, [parashiyot, selectedChapter]);
 
-  // ── Chapter / verse options ──────────────────────────────────────────────
+  // Current value for the combined selector
+  const combinedValue = useMemo(() => {
+    if (parashiyot && activeParashaIndex !== null) {
+      return `p:${selectedBook}:${activeParashaIndex}`;
+    }
+    return `b:${selectedBook}`;
+  }, [parashiyot, selectedBook, activeParashaIndex]);
+
+  // Handle combined selection
+  const handleCombined = (v: string) => {
+    if (v.startsWith('b:')) {
+      onBookChange(v.slice(2));
+    } else {
+      // p:BookEnglish:Index
+      const [, bookEng, idxStr] = v.split(':');
+      const p = PARASHIYOT[bookEng]?.[Number(idxStr)];
+      if (p) onParashaChange(bookEng, p.chapter, p.verse);
+    }
+  };
+
+  // Chapter / verse options
   const chapterOptions = useMemo(
     () => Array.from({ length: chapterCount }, (_, i) => ({
       value: String(i + 1),
@@ -75,32 +109,13 @@ export function NavigationBar({
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-sm mx-auto px-4">
-      {/* Book + Parasha row */}
-      <div className="flex gap-2" dir="rtl">
-        <div className={parashaOptions ? 'flex-1 min-w-0' : 'w-full'}>
-          <CustomSelect
-            testId="select-book"
-            value={selectedBook}
-            groups={bookGroups}
-            onChange={onBookChange}
-          />
-        </div>
-
-        {/* Parasha (Torah only) — sits next to book in same row */}
-        {parashaOptions && activeParashaIndex !== null && (
-          <div className="flex-1 min-w-0">
-            <CustomSelect
-              testId="select-parasha"
-              value={String(activeParashaIndex)}
-              options={parashaOptions}
-              onChange={v => {
-                const p = parashiyot![Number(v)];
-                if (p) onParashaChange(p.chapter, p.verse);
-              }}
-            />
-          </div>
-        )}
-      </div>
+      {/* Unified book + parasha selector */}
+      <CustomSelect
+        testId="select-book"
+        value={combinedValue}
+        groups={combinedGroups}
+        onChange={handleCombined}
+      />
 
       {/* Chapter */}
       <CustomSelect

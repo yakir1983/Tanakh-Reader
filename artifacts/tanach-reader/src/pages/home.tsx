@@ -68,8 +68,8 @@ export default function Home() {
     setVerse(v);
   }, []);
 
-  const handleParasha = useCallback((c: number, v: number) => {
-    setChapter(c); setVerse(v);
+  const handleParasha = useCallback((eng: string, c: number, v: number) => {
+    setBook(eng); setChapter(c); setVerse(v);
   }, []);
 
   const goPrev = () => {
