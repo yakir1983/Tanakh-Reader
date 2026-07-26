@@ -51,23 +51,27 @@ export default function Home() {
     queryKey: ['verse', selectedBook, selectedChapter, selectedVerse],
     queryFn:  () => getVerseText(selectedBook, selectedChapter, selectedVerse),
     enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
+    staleTime: 0,
   });
 
   const { data: rashiSegments, isLoading: isLoadingRashi } = useQuery({
     queryKey: ['rashi', selectedBook, selectedChapter, selectedVerse],
     queryFn:  () => getRashiSegments(selectedBook, selectedChapter, selectedVerse),
     enabled:  !!selectedBook && selectedChapter > 0 && selectedVerse > 0,
+    staleTime: 0,
   });
 
-  // ── Reset chapter/verse when book changes ────────────────────────────────
-  useEffect(() => {
+  // ── Batched navigation handlers (no useEffect — avoids two-render race) ──
+  const handleBookChange = (book: string) => {
+    setSelectedBook(book);
     setSelectedChapter(1);
     setSelectedVerse(1);
-  }, [selectedBook]);
+  };
 
-  useEffect(() => {
+  const handleChapterChange = (chapter: number) => {
+    setSelectedChapter(chapter);
     setSelectedVerse(1);
-  }, [selectedChapter]);
+  };
 
   // ── Stop TTS when verse changes ──────────────────────────────────────────
   useEffect(() => {
@@ -229,8 +233,8 @@ export default function Home() {
           selectedVerse={selectedVerse}
           chapterCount={chapterCount}
           verseCount={verseCount}
-          onBookChange={setSelectedBook}
-          onChapterChange={setSelectedChapter}
+          onBookChange={handleBookChange}
+          onChapterChange={handleChapterChange}
           onVerseChange={setSelectedVerse}
         />
 
