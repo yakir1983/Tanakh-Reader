@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Moon, Sun, AArrowUp, AArrowDown, Volume2, VolumeX, ChevronRight, ChevronLeft } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
@@ -21,6 +21,7 @@ export default function Home() {
   const [isDark,   setIsDark]   = useState(false);
   const [fontSize, setFontSize] = useState(FONT_SIZE_DEFAULT);
   const [speaking, setSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -102,74 +103,53 @@ export default function Home() {
     [chapterCount, verseCount, handleBook, handleChapter, handleVerse],
   );
 
-  // ── TTS helpers ──────────────────────────────────────────────────────────
+  // ── TTS — Google Translate Audio (reliable, works on all devices) ─────────
 
-  /** Remove nikud + cantillation (U+0591–U+05C7) so TTS engines read cleanly. */
+  /** Strip nikud + cantillation before sending to TTS. */
   const cleanForTTS = (text: string) =>
     text.replace(/[\u0591-\u05C7]/g, '').replace(/\s+/g, ' ').trim();
 
-  /** Find best Hebrew voice from the loaded list; null = use browser default. */
-  const findHebrewVoice = (): SpeechSynthesisVoice | null => {
-    const voices = window.speechSynthesis.getVoices();
-    return (
-      voices.find(v => v.lang === 'he-IL') ??
-      voices.find(v => v.lang.startsWith('he')) ??
-      null
-    );
-  };
-
-  /** Speak text now. Must be called synchronously inside a user-gesture handler. */
-  const speakNow = (text: string) => {
-    const cleanText = cleanForTTS(text);
-    if (!cleanText) return;
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang  = 'he-IL';
-    utterance.rate  = 0.85;
-    utterance.onerror = (e) => { console.error('TTS Error:', e); setSpeaking(false); };
-    utterance.onend   = () => setSpeaking(false);
-
-    const heVoice = findHebrewVoice();
-    if (heVoice) utterance.voice = heVoice;
-
-    // Resume in case the engine was suspended (common on mobile after page focus change)
-    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-    window.speechSynthesis.speak(utterance);
-    setSpeaking(true);
-  };
-
-  // ── TTS button handler — must stay synchronous inside onClick ────────────
+  /**
+   * Called directly inside onClick (user gesture) so mobile autoplay is allowed.
+   * Uses Google Translate TTS endpoint — returns MP3, no CORS issues for <audio>.
+   * Max ~200 chars per request; we split on sentence boundaries if needed.
+   */
   const toggleTTS = () => {
-    if (!('speechSynthesis' in window)) {
-      alert('הדפדפן אינו תומך בהקראה');
-      return;
-    }
-
-    // Always cancel first (stops any pending speech)
-    window.speechSynthesis.cancel();
-
-    if (speaking) {
+    // Stop if already playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
       setSpeaking(false);
       return;
     }
 
-    const text = verseText;
-    if (!text) return;
+    const clean = cleanForTTS(verseText);
+    if (!clean) return;
 
-    // Voices may not be loaded on first call — load and speak immediately if
-    // they're already there, otherwise wait for voiceschanged once.
-    if (window.speechSynthesis.getVoices().length > 0) {
-      speakNow(text);
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        speakNow(text);
-      };
-    }
+    // Google Translate TTS — free, no key, supports Hebrew (he)
+    const url =
+      `https://translate.google.com/translate_tts` +
+      `?ie=UTF-8&tl=he&client=tw-ob&q=${encodeURIComponent(clean)}`;
+
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    audio.onended = () => { audioRef.current = null; setSpeaking(false); };
+    audio.onerror = () => { audioRef.current = null; setSpeaking(false); };
+
+    // play() returns a Promise — catch any autoplay rejection
+    audio.play().catch(err => {
+      console.error('Audio play error:', err);
+      audioRef.current = null;
+      setSpeaking(false);
+    });
+
+    setSpeaking(true);
   };
 
   const currentBook  = getBookByEnglish(book);
-  const ttsAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const ttsAvailable = true; // Google TTS works everywhere
 
   const ctrlBtn = (active = false) => [
     'flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm transition-colors',
