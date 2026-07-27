@@ -1,6 +1,10 @@
 /**
  * useGestures — attaches swipe gesture handlers to a DOM element.
  *
+ * Uses the "stable ref" pattern: event listeners are registered once and
+ * always call the latest version of each callback via a ref, so the effect
+ * does NOT re-run (and tear down / re-add listeners) on every render.
+ *
  * Swipe (1 finger, horizontal):
  *   - swipe right → onSwipeRight (prev verse in RTL layout)
  *   - swipe left  → onSwipeLeft  (next verse in RTL layout)
@@ -8,7 +12,7 @@
  * Vertical scroll is never blocked.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface GestureOptions {
   onSwipeLeft?: () => void;
@@ -24,8 +28,11 @@ export function useGestures<T extends HTMLElement = HTMLDivElement>({
 }: GestureOptions) {
   const ref = useRef<T>(null);
 
-  const swipeLeft  = useCallback(() => onSwipeLeft?.(),  [onSwipeLeft]);
-  const swipeRight = useCallback(() => onSwipeRight?.(), [onSwipeRight]);
+  // Keep refs always up-to-date — no need to re-register listeners on every render
+  const onSwipeLeftRef  = useRef(onSwipeLeft);
+  const onSwipeRightRef = useRef(onSwipeRight);
+  onSwipeLeftRef.current  = onSwipeLeft;
+  onSwipeRightRef.current = onSwipeRight;
 
   const startX = useRef(0);
   const startY = useRef(0);
@@ -45,8 +52,8 @@ export function useGestures<T extends HTMLElement = HTMLDivElement>({
       const dx = e.changedTouches[0].clientX - startX.current;
       const dy = e.changedTouches[0].clientY - startY.current;
       if (Math.abs(dx) < swipeThreshold || Math.abs(dx) < Math.abs(dy)) return;
-      if (dx < 0) swipeLeft();
-      else swipeRight();
+      if (dx < 0) onSwipeLeftRef.current?.();
+      else        onSwipeRightRef.current?.();
     };
 
     el.addEventListener('touchstart', onStart, { passive: true });
@@ -56,7 +63,9 @@ export function useGestures<T extends HTMLElement = HTMLDivElement>({
       el.removeEventListener('touchstart', onStart);
       el.removeEventListener('touchend',   onEnd);
     };
-  }, [swipeLeft, swipeRight, swipeThreshold]);
+  // Only re-register if the element or threshold changes — not on callback changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swipeThreshold]);
 
   return ref;
 }

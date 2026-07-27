@@ -21,7 +21,12 @@ export default function Home() {
   const [book,      setBook]      = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
   const [chapter,   setChapter]   = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
   const [verse,     setVerse]     = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
-  const [isDark,    setIsDark]    = useState(false);
+  const [isDark,    setIsDark]    = useState(() => {
+    const saved = localStorage.getItem('tanach_dark') === 'true';
+    // Apply synchronously before first paint — prevents FOUC / black flash
+    document.documentElement.classList.toggle('dark', saved);
+    return saved;
+  });
   const [fontSize,  setFontSize]  = useState(FONT_SIZE_DEFAULT);
   const [aiAnswer,  setAiAnswer]  = useState('');
   const [navError,  setNavError]  = useState('');
@@ -33,9 +38,10 @@ export default function Home() {
   useEffect(() => { localStorage.setItem('tanach_chapter', String(chapter)); }, [chapter]);
   useEffect(() => { localStorage.setItem('tanach_verse',   String(verse));   }, [verse]);
 
-  // ── Dark mode ────────────────────────────────────────────────────────────
+  // ── Dark mode (persisted) ────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('tanach_dark', String(isDark));
   }, [isDark]);
 
   // ── Book structure ────────────────────────────────────────────────────────
@@ -108,15 +114,15 @@ export default function Home() {
     setBook(eng); setChapter(c); setVerse(v);
   }, []);
 
-  const goPrev = () => {
+  const goPrev = useCallback(() => {
     if (verse > 1) { setVerse(v => v - 1); }
     else if (chapter > 1) { setChapter(c => c - 1); setVerse(bookIndex?.[chapter - 2] ?? 1); }
-  };
+  }, [verse, chapter, bookIndex]);
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     if (verse < verseCount)          { setVerse(v => v + 1); }
     else if (chapter < chapterCount) { setChapter(c => c + 1); setVerse(1); }
-  };
+  }, [verse, verseCount, chapter, chapterCount]);
 
   const isAtStart = chapter === 1 && verse === 1;
   const isAtEnd   = chapter === chapterCount && verse === verseCount;
