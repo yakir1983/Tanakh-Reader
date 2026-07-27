@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const RASHI_BASE  = 1.3;   // rem — ברירת מחדל נעימה (מעל המינימום)
+const RASHI_BASE  = 1.2;   // rem — גודל מקורי (לפני כל השינויים)
 const RASHI_STEP  = 0.1;   // rem — צעד עדין
-const RASHI_MIN   = 1.1;   // rem — מינימום נעול על הגודל הנוכחי
-const RASHI_MAX   = 2.0;   // rem — גבול עליון סביר
+const RASHI_MIN   = 1.0;   // rem — 2 לחיצות מינוס מתחת לברירת המחדל
+const RASHI_MAX   = 1.6;   // rem — 4 לחיצות פלוס מעל ברירת המחדל
 
 interface RashiCommentaryProps {
   /** Raw HTML segments from Sefaria, each one dibur: "<b>word.</b> commentary…" */
