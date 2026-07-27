@@ -9,7 +9,8 @@ interface VerseDisplayProps {
   verse: number;
   verseText: string;
   isLoading?: boolean;
-  fontSize?: number;
+  /** Scale factor (1.0 = default). Verse renders at 5rem × fontScale. */
+  fontScale?: number;
 }
 
 export function VerseDisplay({
@@ -18,7 +19,7 @@ export function VerseDisplay({
   verse,
   verseText,
   isLoading,
-  fontSize = 5,
+  fontScale = 1,
 }: VerseDisplayProps) {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [copied,   setCopied]     = useState(false);
@@ -150,7 +151,7 @@ export function VerseDisplay({
             {/* Verse text */}
             <div
               className="text-center leading-relaxed font-normal text-foreground transition-all duration-200"
-              style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${fontSize}rem` }}
+              style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${5 * fontScale}rem` }}
               dir="rtl"
               data-testid="text-verse-content"
             >

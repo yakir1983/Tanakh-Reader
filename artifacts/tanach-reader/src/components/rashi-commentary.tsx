@@ -4,13 +4,12 @@ interface RashiCommentaryProps {
   /** Raw HTML segments from Sefaria, each one dibur: "<b>word.</b> commentary…" */
   segments: string[];
   isLoading?: boolean;
-  /** Primary verse font size (rem). Rashi scales proportionally. Default: 5 */
-  fontSize?: number;
+  /** Scale factor (1.0 = default). Rashi renders at 1.5rem × fontScale. */
+  fontScale?: number;
 }
 
-export function RashiCommentary({ segments, isLoading, fontSize = 5 }: RashiCommentaryProps) {
-  // Scale with the primary verse text (baseline: 1.2rem at fontSize 5)
-  const rashiSize = Math.max(0.85, fontSize * 0.24);
+export function RashiCommentary({ segments, isLoading, fontScale = 1 }: RashiCommentaryProps) {
+  const rashiSize = Math.max(0.9, 1.5 * fontScale);
   if (isLoading) {
     return (
       <div className="w-full max-w-3xl mx-auto px-4 mt-10 space-y-3">

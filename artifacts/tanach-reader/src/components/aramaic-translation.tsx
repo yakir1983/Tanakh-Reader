@@ -9,8 +9,8 @@ interface AramaicTranslationProps {
   /** 'translation' → "תרגום מארמית לעברית" with Languages icon (default)
    *  'explanation'  → "במילים פשוטות" with BookOpen icon */
   kind?: BoxKind;
-  /** Primary verse font size (rem). Box text scales proportionally. Default: 5 */
-  fontSize?: number;
+  /** Scale factor (1.0 = default). Box text renders at 1.5rem × fontScale. */
+  fontScale?: number;
 }
 
 const KINDS: Record<BoxKind, { title: string; Icon: typeof Languages }> = {
@@ -25,9 +25,8 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-export function AramaicTranslation({ translation, isLoading, kind = 'translation', fontSize = 5 }: AramaicTranslationProps) {
-  // Scale with the primary verse text (baseline: 1.2rem at fontSize 5)
-  const boxSize = Math.max(0.85, fontSize * 0.24);
+export function AramaicTranslation({ translation, isLoading, kind = 'translation', fontScale = 1 }: AramaicTranslationProps) {
+  const boxSize = Math.max(0.9, 1.5 * fontScale);
   const { title, Icon } = KINDS[kind];
 
   if (isLoading) {
