@@ -208,8 +208,23 @@ export default function Home() {
   return (
     <div
       ref={gestureRef}
-      className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300"
+      className="relative min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300"
     >
+      {/* ── בס"ד — פינה ימנית עליונה ────────────────────────────────── */}
+      <span
+        dir="rtl"
+        aria-hidden="true"
+        className="bsd-glow fixed top-3 right-4 z-50 select-none pointer-events-none"
+        style={{
+          fontFamily: '"Suez One", "Frank Ruhl Libre", serif',
+          fontSize: '1.05rem',
+          fontWeight: 400,
+          color: 'hsl(270 55% 62%)',
+          letterSpacing: '0.02em',
+        }}
+      >
+        בס״ד
+      </span>
       <div className="container mx-auto py-8 sm:py-10 space-y-8 max-w-3xl px-4">
 
         {/* ── Header ──────────────────────────────────────────────── */}

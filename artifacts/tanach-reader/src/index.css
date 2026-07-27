@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;700;900&family=Suez+One&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -276,6 +276,27 @@
 
 .animate-slide-up {
   animation: slide-up 0.6s ease-out;
+}
+
+/* ── בס"ד shimmer ──────────────────────────────────────────────────────── */
+@keyframes bsd-shimmer {
+  0%, 100% {
+    text-shadow:
+      0 0 6px hsl(270 60% 65% / 0.5),
+      0 0 14px hsl(270 60% 65% / 0.25);
+    opacity: 0.82;
+  }
+  50% {
+    text-shadow:
+      0 0 10px hsl(270 60% 72% / 0.9),
+      0 0 24px hsl(270 55% 70% / 0.55),
+      0 0 40px hsl(270 50% 75% / 0.2);
+    opacity: 1;
+  }
+}
+
+.bsd-glow {
+  animation: bsd-shimmer 3.5s ease-in-out infinite;
 }
 
 @layer utilities {
