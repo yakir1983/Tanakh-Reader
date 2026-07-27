@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const RASHI_BASE  = 1.2;  // original hardcoded size — do not change
+const RASHI_BASE  = 1.2;  // default & absolute minimum — do not change
 const RASHI_STEP  = 0.1;
-const RASHI_MIN   = 1.0;  // 2 steps below base
-const RASHI_MAX   = 1.5;  // 3 steps above base
+const RASHI_MIN   = 1.2;  // locked: cannot go below default
+const RASHI_MAX   = 1.7;  // 5 steps above base
 
 interface RashiCommentaryProps {
   /** Raw HTML segments from Sefaria, each one dibur: "<b>word.</b> commentary…" */
