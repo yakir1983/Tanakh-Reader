@@ -12,13 +12,17 @@ import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
 import type { TanachBook } from '@/lib/tanach-data';
-
+const VERSE_SIZE_MIN     = 1;
+const VERSE_SIZE_MAX     = 3.5;
+const VERSE_SIZE_STEP    = 0.25;
+const VERSE_SIZE_DEFAULT = 2;
 
 export default function Home() {
-  const [book,     setBook]     = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
-  const [chapter,  setChapter]  = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
-  const [verse,    setVerse]    = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
-  const [isDark,   setIsDark]   = useState(false);
+  const [book,      setBook]      = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
+  const [chapter,   setChapter]   = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
+  const [verse,     setVerse]     = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
+  const [isDark,    setIsDark]    = useState(false);
+  const [verseSize, setVerseSize] = useState(VERSE_SIZE_DEFAULT);
   const [aiAnswer,  setAiAnswer]  = useState('');
   const [navError,  setNavError]  = useState('');
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -221,12 +225,29 @@ export default function Home() {
           </button>
           <p className="text-sm text-muted-foreground" dir="rtl">לימוד התנ״ך עם פירוש רש״י</p>
 
-          {/* Controls — dark mode + home */}
+          {/* Controls — home + verse font size + dark mode */}
           <div className="flex items-center justify-center gap-2 pt-3 flex-wrap">
             <button onClick={goHome} data-testid="button-home"
               className={ctrlBtn()} title="חזרה לבראשית א׳:א׳" aria-label="בית">
               <HomeIcon className="w-4 h-4" />
               <span dir="rtl">בית</span>
+            </button>
+
+            <div className="w-px h-5 bg-border mx-1" />
+
+            <button
+              onClick={() => setVerseSize(s => +(Math.max(s - VERSE_SIZE_STEP, VERSE_SIZE_MIN)).toFixed(2))}
+              disabled={verseSize <= VERSE_SIZE_MIN}
+              data-testid="button-font-decrease"
+              className={ctrlBtn()}>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
+            </button>
+            <button
+              onClick={() => setVerseSize(s => +(Math.min(s + VERSE_SIZE_STEP, VERSE_SIZE_MAX)).toFixed(2))}
+              disabled={verseSize >= VERSE_SIZE_MAX}
+              data-testid="button-font-increase"
+              className={ctrlBtn()}>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
             </button>
 
             <div className="w-px h-5 bg-border mx-1" />
@@ -304,6 +325,7 @@ export default function Home() {
           verse={verse}
           verseText={verseText}
           isLoading={loadingVerse}
+          fontSize={verseSize}
         />
 
         {/* ── Rashi ───────────────────────────────────────────────── */}
