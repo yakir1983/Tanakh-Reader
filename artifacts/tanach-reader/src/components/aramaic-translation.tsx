@@ -9,6 +9,8 @@ interface AramaicTranslationProps {
   /** 'translation' → "תרגום מארמית לעברית" with Languages icon (default)
    *  'explanation'  → "במילים פשוטות" with BookOpen icon */
   kind?: BoxKind;
+  /** Primary verse font size (rem). Box text scales proportionally. Default: 5 */
+  fontSize?: number;
 }
 
 const KINDS: Record<BoxKind, { title: string; Icon: typeof Languages }> = {
@@ -23,7 +25,9 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
+export function AramaicTranslation({ translation, isLoading, kind = 'translation', fontSize = 5 }: AramaicTranslationProps) {
+  // Scale with the primary verse text (baseline: 1.2rem at fontSize 5)
+  const boxSize = Math.max(0.85, fontSize * 0.24);
   const { title, Icon } = KINDS[kind];
 
   if (isLoading) {
@@ -60,7 +64,7 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
           <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
           <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
         </div>
-        <p className="text-foreground leading-relaxed" style={{ fontSize: '1.2rem', lineHeight: '2' }}>
+        <p className="text-foreground leading-relaxed" style={{ fontSize: `${boxSize}rem`, lineHeight: '2' }}>
           {translation}
         </p>
       </div>

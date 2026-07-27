@@ -339,6 +339,7 @@ export default function Home() {
         <RashiCommentary
           segments={rashiSegments ?? []}
           isLoading={loadingRashi}
+          fontSize={fontSize}
         />
 
         {/* ── Aramaic translation / Plain-language explanation ─────── */}
@@ -347,12 +348,14 @@ export default function Home() {
             translation={aramaicTranslation}
             isLoading={loadingTranslation}
             kind="translation"
+            fontSize={fontSize}
           />
         ) : (
           <AramaicTranslation
             translation={verseExplanation}
             isLoading={loadingExplanation}
             kind="explanation"
+            fontSize={fontSize}
           />
         )}
 
