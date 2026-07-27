@@ -148,7 +148,7 @@ export function VerseDisplay({
             {/* Verse text */}
             <div
               className="text-center leading-relaxed font-normal text-foreground transition-all duration-200"
-              style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${5 * fontScale}rem` }}
+              style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: '5rem' }}
               dir="rtl"
               data-testid="text-verse-content"
             >
