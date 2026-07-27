@@ -24,10 +24,10 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-const BOX_BASE = 1.5;   // rem — comfortable default
-const BOX_STEP = 0.15;
-const BOX_MIN  = 0.85;
-const BOX_MAX  = 2.5;
+const BOX_BASE = 1.1;   // rem — פרופורציונלי לפסוק ברירת מחדל
+const BOX_STEP = 0.1;   // rem — קפיצה עדינה
+const BOX_MIN  = 0.8;   // rem — לא יקטן מ-~13px
+const BOX_MAX  = 1.8;   // rem — לא יגדל מעל ~29px
 
 export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];

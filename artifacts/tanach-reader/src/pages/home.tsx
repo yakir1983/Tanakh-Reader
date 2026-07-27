@@ -12,10 +12,10 @@ import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
 import type { TanachBook } from '@/lib/tanach-data';
-const VERSE_SIZE_MIN     = 1;
-const VERSE_SIZE_MAX     = 3.5;
-const VERSE_SIZE_STEP    = 0.25;
-const VERSE_SIZE_DEFAULT = 2;
+const VERSE_SIZE_MIN     = 1;      // rem — לא יקטן מ-16px
+const VERSE_SIZE_MAX     = 2.8;    // rem — לא יגדל מעל 45px
+const VERSE_SIZE_STEP    = 0.1;    // rem — קפיצה עדינה ~1.6px
+const VERSE_SIZE_DEFAULT = 1.6;    // rem — נוח לקריאה במובייל
 
 export default function Home() {
   const [book,      setBook]      = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
