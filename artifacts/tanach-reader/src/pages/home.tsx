@@ -76,11 +76,11 @@ export default function Home() {
     staleTime: Infinity,
   });
 
-  // ── Plain-language explanation (all non-Aramaic verses) ───────────────────
+  // ── Plain-language explanation (all verses, including Aramaic) ───────────
   const { data: verseExplanation, isLoading: loadingExplanation } = useQuery({
     queryKey: ['explanation', book, chapter, verse],
     queryFn:  () => fetchVerseExplanation(book, chapter, verse, verseText),
-    enabled:  !needsTranslation && verseText.length > 0,
+    enabled:  verseText.length > 0,
     staleTime: Infinity,
   });
 
@@ -330,20 +330,21 @@ export default function Home() {
           isLoading={loadingRashi}
         />
 
-        {/* ── Aramaic translation / Plain-language explanation ─────── */}
-        {needsTranslation ? (
+        {/* ── Aramaic translation (only for Aramaic verses) ────────── */}
+        {needsTranslation && (
           <AramaicTranslation
             translation={aramaicTranslation}
             isLoading={loadingTranslation}
             kind="translation"
           />
-        ) : (
-          <AramaicTranslation
-            translation={verseExplanation}
-            isLoading={loadingExplanation}
-            kind="explanation"
-          />
         )}
+
+        {/* ── Plain-language explanation (all verses) ──────────────── */}
+        <AramaicTranslation
+          translation={verseExplanation}
+          isLoading={loadingExplanation}
+          kind="explanation"
+        />
 
         {/* ── Prev / Next ──────────────────────────────────────────── */}
         <div className="flex items-center justify-center gap-4 pb-16" dir="rtl">
