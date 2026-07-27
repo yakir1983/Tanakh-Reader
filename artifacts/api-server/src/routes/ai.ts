@@ -77,6 +77,82 @@ const CHARACTERS_MAP = `If only a character name is mentioned (no explicit book/
 עזרא → {"book":"Ezra","chapter":1,"verse":1}
 נחמיה → {"book":"Nehemiah","chapter":1,"verse":1}`;
 
+// ── Biblical topics/events map ─────────────────────────────────────────────────
+const TOPICS_MAP = `If a well-known biblical event or topic is mentioned (no explicit book/chapter), use these:
+בריאת העולם / שבעת ימי הבריאה → {"book":"Genesis","chapter":1,"verse":1}
+בריאת האדם / אדם הראשון → {"book":"Genesis","chapter":2,"verse":7}
+גן עדן → {"book":"Genesis","chapter":2,"verse":8}
+חטא אדם וחוה / עץ הדעת / נחש → {"book":"Genesis","chapter":3,"verse":1}
+גירוש מגן עדן → {"book":"Genesis","chapter":3,"verse":23}
+קין והבל → {"book":"Genesis","chapter":4,"verse":1}
+חנוך → {"book":"Genesis","chapter":5,"verse":18}
+הנפילים / בני האלהים → {"book":"Genesis","chapter":6,"verse":1}
+המבול / נח ותיבה / תיבת נח → {"book":"Genesis","chapter":6,"verse":9}
+קשת בענן / ברית הקשת → {"book":"Genesis","chapter":9,"verse":12}
+מגדל בבל → {"book":"Genesis","chapter":11,"verse":1}
+ברית בין הבתרים → {"book":"Genesis","chapter":15,"verse":1}
+לוט ועיר סדום / סדום ועמורה → {"book":"Genesis","chapter":18,"verse":20}
+הפיכת סדום / הצלת לוט → {"book":"Genesis","chapter":19,"verse":1}
+עקדת יצחק / עקידה → {"book":"Genesis","chapter":22,"verse":1}
+סולם יעקב / חלום יעקב → {"book":"Genesis","chapter":28,"verse":10}
+יעקב ועשו / ברכת יצחק → {"book":"Genesis","chapter":27,"verse":1}
+מאבק יעקב עם המלאך → {"book":"Genesis","chapter":32,"verse":25}
+כתונת הפסים / יוסף ואחיו → {"book":"Genesis","chapter":37,"verse":1}
+חלומות יוסף → {"book":"Genesis","chapter":37,"verse":5}
+יוסף בבית פוטיפר → {"book":"Genesis","chapter":39,"verse":1}
+יוסף בבור / מכירת יוסף → {"book":"Genesis","chapter":37,"verse":23}
+יוסף מפרש חלומות / חלומות פרעה → {"book":"Genesis","chapter":41,"verse":1}
+הסנה הבוער → {"book":"Exodus","chapter":3,"verse":1}
+מכות מצרים / עשר מכות → {"book":"Exodus","chapter":7,"verse":14}
+מכת בכורות / מכה אחרונה → {"book":"Exodus","chapter":12,"verse":29}
+פסח / ליל הסדר / קרבן פסח → {"book":"Exodus","chapter":12,"verse":1}
+יציאת מצרים → {"book":"Exodus","chapter":12,"verse":31}
+קריעת ים סוף / ים סוף → {"book":"Exodus","chapter":14,"verse":21}
+שירת הים / שירת משה → {"book":"Exodus","chapter":15,"verse":1}
+מן במדבר / לחם מן השמים → {"book":"Exodus","chapter":16,"verse":4}
+מי מריבה / מי מסה → {"book":"Exodus","chapter":17,"verse":1}
+מעמד הר סיני / מתן תורה → {"book":"Exodus","chapter":19,"verse":1}
+עשרת הדיברות / לוחות הברית → {"book":"Exodus","chapter":20,"verse":1}
+חטא העגל / עגל הזהב → {"book":"Exodus","chapter":32,"verse":1}
+שבירת הלוחות → {"book":"Exodus","chapter":32,"verse":19}
+המשכן / בניית המשכן → {"book":"Exodus","chapter":25,"verse":1}
+ברכת כהנים → {"book":"Numbers","chapter":6,"verse":22}
+המרגלים / עשרה מרגלים → {"book":"Numbers","chapter":13,"verse":1}
+קורח ועדתו / מחלוקת קורח → {"book":"Numbers","chapter":16,"verse":1}
+פרה אדומה → {"book":"Numbers","chapter":19,"verse":1}
+נחש הנחושת → {"book":"Numbers","chapter":21,"verse":6}
+בלעם ואתונו / אתון בלעם → {"book":"Numbers","chapter":22,"verse":21}
+קריאת שמע → {"book":"Deuteronomy","chapter":6,"verse":4}
+מות משה / פטירת משה → {"book":"Deuteronomy","chapter":34,"verse":1}
+כניסה לארץ / עברית הירדן → {"book":"Joshua","chapter":3,"verse":1}
+יריחו / חומות יריחו → {"book":"Joshua","chapter":6,"verse":1}
+שמש גבעון / יהושע עוצר השמש → {"book":"Joshua","chapter":10,"verse":12}
+דבורה ויעל / שירת דבורה → {"book":"Judges","chapter":4,"verse":1}
+גדעון ומדיין → {"book":"Judges","chapter":6,"verse":11}
+שמשון ודלילה → {"book":"Judges","chapter":16,"verse":4}
+חנה ותפילתה / חנה ושמואל → {"book":"I Samuel","chapter":1,"verse":1}
+שאול הראשון / משיחת שאול → {"book":"I Samuel","chapter":10,"verse":1}
+דוד וגוליית → {"book":"I Samuel","chapter":17,"verse":1}
+דוד ויהונתן → {"book":"I Samuel","chapter":18,"verse":1}
+משיחת דוד → {"book":"I Samuel","chapter":16,"verse":1}
+בת שבע / דוד ובת שבע → {"book":"II Samuel","chapter":11,"verse":1}
+בניית בית המקדש / בית המקדש הראשון → {"book":"I Kings","chapter":6,"verse":1}
+חכמת שלמה / משפט שלמה → {"book":"I Kings","chapter":3,"verse":16}
+אליהו בכרמל / נביאי הבעל → {"book":"I Kings","chapter":18,"verse":20}
+אליהו בחורב → {"book":"I Kings","chapter":19,"verse":9}
+עליית אליהו / רכב האש → {"book":"II Kings","chapter":2,"verse":1}
+אלישע ושונמית / ילד השונמית → {"book":"II Kings","chapter":4,"verse":8}
+חורבן בית המקדש / גלות בבל → {"book":"II Kings","chapter":25,"verse":1}
+חזון ישעיה / שרפים → {"book":"Isaiah","chapter":6,"verse":1}
+חזון יחזקאל / מרכבה → {"book":"Ezekiel","chapter":1,"verse":1}
+עצמות היבשות / בקעת העצמות → {"book":"Ezekiel","chapter":37,"verse":1}
+יונה בבטן הדג / יונה והדג → {"book":"Jonah","chapter":1,"verse":17}
+כבשן האש / שדרך מישך ועבד נגו → {"book":"Daniel","chapter":3,"verse":1}
+דניאל בגוב האריות → {"book":"Daniel","chapter":6,"verse":17}
+מגילת אסתר / פורים / המן → {"book":"Esther","chapter":1,"verse":1}
+רות ובועז → {"book":"Ruth","chapter":2,"verse":1}
+ספר איוב / סבל איוב → {"book":"Job","chapter":1,"verse":1}`;
+
 // ── Navigate prompt ────────────────────────────────────────────────────────────
 const NAV_PROMPT = `Extract a Bible reference from the Hebrew text and return JSON.
 Book map: ${BOOK_MAP_STR}
@@ -85,22 +161,26 @@ Hebrew gematria numbers: א=1 ב=2 ג=3 ד=4 ה=5 ו=6 ז=7 ח=8 ט=9 י=10 יא
 
 ${CHARACTERS_MAP}
 
+${TOPICS_MAP}
+
 Return exactly one of:
 {"found":true,"book":"<English name>","chapter":<number>,"verse":<number>}
 {"found":false}
 
 Rules:
 - If explicit book+chapter+verse given → use them directly.
-- If only a character name → use the character defaults above.
+- If a character name matches → use character defaults.
+- If a topic/event name matches → use topic defaults.
 - If only chapter/verse without book → use book "CURRENT".
 - Default chapter=1, verse=1 if not mentioned.
 
 Examples:
 "תהילים פרק כב פסוק א" → {"found":true,"book":"Psalms","chapter":22,"verse":1}
-"שמואל ב פרק ז" → {"found":true,"book":"II Samuel","chapter":7,"verse":1}
+"המבול" → {"found":true,"book":"Genesis","chapter":6,"verse":9}
+"קריעת ים סוף" → {"found":true,"book":"Exodus","chapter":14,"verse":21}
+"עקדת יצחק" → {"found":true,"book":"Genesis","chapter":22,"verse":1}
+"חטא העגל" → {"found":true,"book":"Exodus","chapter":32,"verse":1}
 "דוד המלך" → {"found":true,"book":"I Samuel","chapter":16,"verse":1}
-"משה" → {"found":true,"book":"Exodus","chapter":2,"verse":1}
-"שלמה" → {"found":true,"book":"I Kings","chapter":3,"verse":5}
 "פרק ה" → {"found":true,"book":"CURRENT","chapter":5,"verse":1}
 "hello" → {"found":false}`;
 
