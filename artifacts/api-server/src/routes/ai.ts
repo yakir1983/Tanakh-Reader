@@ -268,4 +268,42 @@ router.post("/ai/translate-verse", async (req, res) => {
   }
 });
 
+// ── POST /api/ai/explain-verse ─────────────────────────────────────────────────
+// Called automatically for every non-Aramaic verse to show "במילים פשוטות".
+const EXPLAIN_PROMPT = `אתה מורה נחמד שמסביר פסוקים מהתנ"ך לילדים ולמבוגרים שלא מכירים.
+קרא את הפסוק וכתב הסבר קצר בעברית יומיומית ופשוטה — כמו שמספרים סיפור.
+כתוב 2–3 משפטים בלבד. אל תשתמש במונחים דתיים מורכבים.
+החזר רק את ההסבר, ללא כותרת, ללא הקדמה.`;
+
+router.post("/ai/explain-verse", async (req, res) => {
+  const { book, chapter, verse, verseText } = req.body as {
+    book?: string;
+    chapter?: number;
+    verse?: number;
+    verseText: string;
+  };
+
+  if (!verseText || typeof verseText !== "string") {
+    res.status(400).json({ error: "verseText required" });
+    return;
+  }
+
+  try {
+    const cleaned = cleanVerseText(verseText);
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.6-terra",
+      max_completion_tokens: 300,
+      messages: [
+        { role: "system", content: EXPLAIN_PROMPT },
+        { role: "user",   content: `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${cleaned}` },
+      ],
+    });
+    const explanation = (completion.choices[0]?.message?.content ?? "").trim();
+    res.json({ explanation: explanation || "לא הצלחתי להסביר את הפסוק." });
+  } catch (err) {
+    console.error("Explain-verse error:", err);
+    res.status(500).json({ error: "Explanation failed" });
+  }
+});
+
 export default router;

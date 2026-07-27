@@ -6,7 +6,7 @@ import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
 import { getBookIndex, getChapterVerses, getRashiSegments } from '@/lib/sefaria-api';
-import { fetchVerseTranslation } from '@/lib/ai-api';
+import { fetchVerseTranslation, fetchVerseExplanation } from '@/lib/ai-api';
 import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
@@ -73,6 +73,14 @@ export default function Home() {
     queryKey: ['translation', book, chapter, verse],
     queryFn:  () => fetchVerseTranslation(book, chapter, verse, verseText),
     enabled:  needsTranslation && verseText.length > 0,
+    staleTime: Infinity,
+  });
+
+  // ── Plain-language explanation (all non-Aramaic verses) ───────────────────
+  const { data: verseExplanation, isLoading: loadingExplanation } = useQuery({
+    queryKey: ['explanation', book, chapter, verse],
+    queryFn:  () => fetchVerseExplanation(book, chapter, verse, verseText),
+    enabled:  !needsTranslation && verseText.length > 0,
     staleTime: Infinity,
   });
 
@@ -313,11 +321,18 @@ export default function Home() {
           isLoading={loadingRashi}
         />
 
-        {/* ── Aramaic auto-translation ─────────────────────────────── */}
-        {needsTranslation && (
+        {/* ── Aramaic translation / Plain-language explanation ─────── */}
+        {needsTranslation ? (
           <AramaicTranslation
             translation={aramaicTranslation}
             isLoading={loadingTranslation}
+            kind="translation"
+          />
+        ) : (
+          <AramaicTranslation
+            translation={verseExplanation}
+            isLoading={loadingExplanation}
+            kind="explanation"
           />
         )}
 
