@@ -10,10 +10,10 @@ export function AramaicTranslation({ translation, isLoading }: AramaicTranslatio
   if (isLoading) {
     return (
       <div className="w-full max-w-3xl mx-auto px-4 mt-6">
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 animate-pulse">
+        <div className="rounded-xl border border-violet-400/25 bg-violet-500/5 p-5 animate-pulse">
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-4 w-4 rounded bg-amber-500/30" />
-            <div className="h-5 w-44 bg-amber-500/20 rounded" />
+            <div className="h-4 w-4 rounded bg-violet-400/30" />
+            <div className="h-5 w-44 bg-violet-400/20 rounded" />
           </div>
           <div className="h-4 w-full bg-muted/30 rounded" />
           <div className="h-4 w-3/4 bg-muted/30 rounded mt-2" />
@@ -33,12 +33,16 @@ export function AramaicTranslation({ translation, isLoading }: AramaicTranslatio
     >
       <div
         dir="rtl"
-        className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-5 py-4"
-        style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+        className="rounded-xl border border-violet-400/35 bg-violet-500/8 px-5 py-4"
+        style={{
+          fontFamily: 'Frank Ruhl Libre, serif',
+          background: 'color-mix(in srgb, hsl(270 60% 60%) 8%, transparent)',
+          borderColor: 'color-mix(in srgb, hsl(270 60% 65%) 35%, transparent)',
+        }}
       >
         <div className="flex items-center gap-2 mb-3">
-          <Languages className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-          <h3 className="text-base font-bold text-amber-700 dark:text-amber-400">
+          <Languages className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(270 55% 55%)' }} />
+          <h3 className="text-base font-bold" style={{ color: 'hsl(270 55% 50%)' }}>
             תרגום מארמית לעברית
           </h3>
         </div>

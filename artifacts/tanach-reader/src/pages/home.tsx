@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Moon, Sun, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Moon, Sun, ChevronRight, ChevronLeft, AlertCircle, Home as HomeIcon } from 'lucide-react';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
@@ -165,6 +165,18 @@ export default function Home() {
     [book, queryClient, showNavError],
   );
 
+  // ── Home reset ────────────────────────────────────────────────────────────
+  const goHome = useCallback(() => {
+    localStorage.removeItem('tanach_book');
+    localStorage.removeItem('tanach_chapter');
+    localStorage.removeItem('tanach_verse');
+    setBook('Genesis');
+    setChapter(1);
+    setVerse(1);
+    setAiAnswer('');
+    setNavError('');
+  }, []);
+
   const currentBook = getBookByEnglish(book);
 
   const ctrlBtn = () => [
@@ -179,17 +191,33 @@ export default function Home() {
 
         {/* ── Header ──────────────────────────────────────────────── */}
         <header className="text-center space-y-2">
-          <h1
-            className="text-4xl sm:text-5xl font-bold text-primary"
-            style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
-            dir="rtl"
+          <button
+            onClick={goHome}
+            data-testid="button-home-logo"
+            className="group cursor-pointer bg-transparent border-none p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm"
+            title="חזרה לבראשית פרק א׳ פסוק א׳"
+            aria-label="חזרה להתחלה"
           >
-            קורא תנ״ך ורש״י
-          </h1>
+            <h1
+              className="text-4xl sm:text-5xl font-bold text-primary transition-opacity group-hover:opacity-75"
+              style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+              dir="rtl"
+            >
+              קורא תנ״ך ורש״י
+            </h1>
+          </button>
           <p className="text-sm text-muted-foreground" dir="rtl">לימוד התנ״ך עם פירוש רש״י</p>
 
-          {/* Controls — font size + dark mode only */}
+          {/* Controls — font size + dark mode + home */}
           <div className="flex items-center justify-center gap-2 pt-3 flex-wrap">
+            <button onClick={goHome} data-testid="button-home"
+              className={ctrlBtn()} title="חזרה לבראשית א׳:א׳" aria-label="בית">
+              <HomeIcon className="w-4 h-4" />
+              <span dir="rtl">בית</span>
+            </button>
+
+            <div className="w-px h-5 bg-border mx-1" />
+
             <button onClick={() => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN))}
               disabled={fontSize <= FONT_SIZE_MIN} data-testid="button-font-decrease"
               className={ctrlBtn()}>
