@@ -24,10 +24,10 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-const BOX_BASE = 1.6;
+const BOX_BASE = 1.2;  // original hardcoded size — do not change
 const BOX_STEP = 0.1;
-const BOX_MIN  = 1.4;
-const BOX_MAX  = 2.2;
+const BOX_MIN  = 1.0;  // 2 steps below base
+const BOX_MAX  = 1.5;  // 3 steps above base
 
 export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
