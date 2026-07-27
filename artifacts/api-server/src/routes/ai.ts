@@ -3,6 +3,12 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
+// Translation request signals — checked BEFORE question signals
+const TRANSLATE_SIGNALS = [
+  "תרגם", "תרגמ", "תרגום",
+  "מה כתוב פה", "מה כתוב כאן", "מה זה אומר",
+];
+
 // Hebrew question-signal words — if transcript contains any, route to Q&A
 const QUESTION_SIGNALS = [
   "מה ", "מי ", "למה ", "מדוע ", "כיצד ", "איך ", "האם ",
@@ -10,13 +16,18 @@ const QUESTION_SIGNALS = [
   "על מה", "מה אומר", "מה כתוב", "מה פירוש",
 ];
 
+function wordBoundaryMatch(text: string, signal: string): boolean {
+  const idx = text.indexOf(signal);
+  if (idx === -1) return false;
+  return idx === 0 || text[idx - 1] === ' ';
+}
+
+function isTranslateRequest(text: string): boolean {
+  return TRANSLATE_SIGNALS.some(s => wordBoundaryMatch(text, s));
+}
+
 function isQuestion(text: string): boolean {
-  return QUESTION_SIGNALS.some(signal => {
-    const idx = text.indexOf(signal);
-    if (idx === -1) return false;
-    // Must start at beginning of string or after a space (word boundary)
-    return idx === 0 || text[idx - 1] === ' ';
-  });
+  return QUESTION_SIGNALS.some(s => wordBoundaryMatch(text, s));
 }
 
 // ── Shared book map ────────────────────────────────────────────────────────────
@@ -98,12 +109,20 @@ const QA_PROMPT = `You are a Hebrew Bible scholar. Answer questions about Tanach
 Always reply in Hebrew. Keep answers concise: 2-3 sentences maximum.
 Start your answer immediately, no preamble.`;
 
+// ── Translation prompt ──────────────────────────────────────────────────────────
+const TRANSLATE_PROMPT = `You are a Biblical Aramaic expert.
+The verse below is written in Biblical Aramaic (not Hebrew).
+Translate it into clear, simple, modern Hebrew — plain Israeli Hebrew, not Talmudic.
+Return only the translation. No preamble, no explanation, no source text.`;
+
+// ── POST /api/ai/voice-command ─────────────────────────────────────────────────
 router.post("/ai/voice-command", async (req, res) => {
-  const { transcript, currentBook, currentChapter, currentVerse } = req.body as {
+  const { transcript, currentBook, currentChapter, currentVerse, currentVerseText } = req.body as {
     transcript: string;
     currentBook?: string;
     currentChapter?: number;
     currentVerse?: number;
+    currentVerseText?: string;
   };
 
   if (!transcript || typeof transcript !== "string") {
@@ -112,7 +131,24 @@ router.post("/ai/voice-command", async (req, res) => {
   }
 
   try {
-    if (isQuestion(transcript)) {
+    if (isTranslateRequest(transcript)) {
+      // ── Translate current verse ───────────────────────────────────────────────
+      if (!currentVerseText) {
+        res.json({ type: "answer", text: "לא נמצא טקסט לתרגום בפסוק הנוכחי." });
+        return;
+      }
+      const completion = await openai.chat.completions.create({
+        model: "gpt-5.6-terra",
+        max_completion_tokens: 256,
+        messages: [
+          { role: "system", content: TRANSLATE_PROMPT },
+          { role: "user",   content: `ספר ${currentBook || ""}, פרק ${currentChapter || ""}, פסוק ${currentVerse || ""}:\n${currentVerseText}` },
+        ],
+      });
+      const text = (completion.choices[0]?.message?.content ?? "").trim();
+      res.json({ type: "answer", text: text || "לא הצלחתי לתרגם את הפסוק." });
+
+    } else if (isQuestion(transcript)) {
       // ── Q&A ──────────────────────────────────────────────────────────────────
       const ctxNote = currentBook
         ? `[Currently reading: ${currentBook} chapter ${currentChapter} verse ${currentVerse}] `
@@ -155,6 +191,38 @@ router.post("/ai/voice-command", async (req, res) => {
   } catch (err) {
     console.error("AI voice-command error:", err);
     res.status(500).json({ error: "AI error" });
+  }
+});
+
+// ── POST /api/ai/translate-verse ───────────────────────────────────────────────
+// Called automatically by the frontend when an Aramaic verse is displayed.
+router.post("/ai/translate-verse", async (req, res) => {
+  const { book, chapter, verse, verseText } = req.body as {
+    book?: string;
+    chapter?: number;
+    verse?: number;
+    verseText: string;
+  };
+
+  if (!verseText || typeof verseText !== "string") {
+    res.status(400).json({ error: "verseText required" });
+    return;
+  }
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.6-terra",
+      max_completion_tokens: 256,
+      messages: [
+        { role: "system", content: TRANSLATE_PROMPT },
+        { role: "user",   content: `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${verseText}` },
+      ],
+    });
+    const translation = (completion.choices[0]?.message?.content ?? "").trim();
+    res.json({ translation: translation || "לא הצלחתי לתרגם את הפסוק." });
+  } catch (err) {
+    console.error("Translation error:", err);
+    res.status(500).json({ error: "Translation failed" });
   }
 });
 

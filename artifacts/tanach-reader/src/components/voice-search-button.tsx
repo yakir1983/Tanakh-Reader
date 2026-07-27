@@ -12,6 +12,7 @@ interface Props {
   currentBook?: string;
   currentChapter?: number;
   currentVerse?: number;
+  currentVerseText?: string;
 }
 
 const SpeechRecognitionAPI =
@@ -27,6 +28,7 @@ export function VoiceSearchButton({
   currentBook,
   currentChapter,
   currentVerse,
+  currentVerseText,
 }: Props) {
   const [phase,     setPhase]     = useState<Phase>('idle');
   const [status,    setStatus]    = useState('');
@@ -44,7 +46,7 @@ export function VoiceSearchButton({
       const res = await fetch('/api/ai/voice-command', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript, currentBook, currentChapter, currentVerse }),
+        body: JSON.stringify({ transcript, currentBook, currentChapter, currentVerse, currentVerseText }),
       });
 
       if (!res.ok) throw new Error(`server ${res.status}`);

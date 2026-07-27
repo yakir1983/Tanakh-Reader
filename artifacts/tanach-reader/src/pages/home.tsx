@@ -6,7 +6,10 @@ import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
 import { RashiCommentary } from '@/components/rashi-commentary';
 import { getBookIndex, getChapterVerses, getRashiSegments } from '@/lib/sefaria-api';
+import { fetchVerseTranslation } from '@/lib/ai-api';
+import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
+import { AramaicTranslation } from '@/components/aramaic-translation';
 import type { TanachBook } from '@/lib/tanach-data';
 
 const FONT_SIZE_MIN     = 2.5;
@@ -61,6 +64,15 @@ export default function Home() {
     queryKey: ['rashi', book, chapter, verse],
     queryFn:  () => getRashiSegments(book, chapter, verse),
     enabled:  chapterCount > 0,
+    staleTime: Infinity,
+  });
+
+  // ── Aramaic auto-translation ───────────────────────────────────────────────
+  const needsTranslation = isAramaicVerse(book, chapter, verse);
+  const { data: aramaicTranslation, isLoading: loadingTranslation } = useQuery({
+    queryKey: ['translation', book, chapter, verse],
+    queryFn:  () => fetchVerseTranslation(book, chapter, verse, verseText),
+    enabled:  needsTranslation && verseText.length > 0,
     staleTime: Infinity,
   });
 
@@ -220,6 +232,7 @@ export default function Home() {
             currentBook={book}
             currentChapter={chapter}
             currentVerse={verse}
+            currentVerseText={verseText}
           />
 
           {/* ── Navigation error toast ──────────────────────────────── */}
@@ -271,6 +284,14 @@ export default function Home() {
           segments={rashiSegments ?? []}
           isLoading={loadingRashi}
         />
+
+        {/* ── Aramaic auto-translation ─────────────────────────────── */}
+        {needsTranslation && (
+          <AramaicTranslation
+            translation={aramaicTranslation}
+            isLoading={loadingTranslation}
+          />
+        )}
 
         {/* ── Prev / Next ──────────────────────────────────────────── */}
         <div className="flex items-center justify-center gap-4 pb-16" dir="rtl">
