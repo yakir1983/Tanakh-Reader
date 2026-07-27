@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Moon, Sun, ChevronRight, ChevronLeft, AlertCircle, Home as HomeIcon } from 'lucide-react';
+import { useGestures } from '@/hooks/use-gestures';
 import { NavigationBar } from '@/components/navigation-bar';
 import { VoiceSearchButton } from '@/components/voice-search-button';
 import { VerseDisplay } from '@/components/verse-display';
@@ -187,6 +188,22 @@ export default function Home() {
 
   const currentBook = getBookByEnglish(book);
 
+  // ── Touch gestures ────────────────────────────────────────────────────────
+  // Pinch delta is in pixels; we map each pinchStep (18px) to one FONT_SIZE_STEP.
+  const handlePinch = useCallback((delta: number) => {
+    setFontSize(f =>
+      delta > 0
+        ? Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX)
+        : Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN),
+    );
+  }, []);
+
+  const gestureRef = useGestures<HTMLDivElement>({
+    onSwipeRight: () => { if (!isAtStart) goPrev(); },
+    onSwipeLeft:  () => { if (!isAtEnd)   goNext(); },
+    onPinchZoom:  handlePinch,
+  });
+
   const ctrlBtn = () => [
     'flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm transition-colors',
     'border-border bg-card text-foreground hover:bg-accent/60',
@@ -194,7 +211,10 @@ export default function Home() {
   ].join(' ');
 
   return (
-    <div className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300">
+    <div
+      ref={gestureRef}
+      className="min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300"
+    >
       <div className="container mx-auto py-8 sm:py-10 space-y-8 max-w-3xl px-4">
 
         {/* ── Header ──────────────────────────────────────────────── */}
