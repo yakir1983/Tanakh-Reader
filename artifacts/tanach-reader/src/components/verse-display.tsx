@@ -9,8 +9,6 @@ interface VerseDisplayProps {
   verse: number;
   verseText: string;
   isLoading?: boolean;
-  /** Scale factor (1.0 = default). Verse renders at 5rem × fontScale. */
-  fontScale?: number;
 }
 
 export function VerseDisplay({
@@ -19,7 +17,6 @@ export function VerseDisplay({
   verse,
   verseText,
   isLoading,
-  fontScale = 1,
 }: VerseDisplayProps) {
   const [menuOpen, setMenuOpen]   = useState(false);
   const [copied,   setCopied]     = useState(false);

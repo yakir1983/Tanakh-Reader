@@ -1,15 +1,23 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+
+const RASHI_BASE  = 1.5;   // rem — comfortable default
+const RASHI_STEP  = 0.15;
+const RASHI_MIN   = 0.85;
+const RASHI_MAX   = 2.5;
 
 interface RashiCommentaryProps {
   /** Raw HTML segments from Sefaria, each one dibur: "<b>word.</b> commentary…" */
   segments: string[];
   isLoading?: boolean;
-  /** Scale factor (1.0 = default). Rashi renders at 1.5rem × fontScale. */
-  fontScale?: number;
 }
 
-export function RashiCommentary({ segments, isLoading, fontScale = 1 }: RashiCommentaryProps) {
-  const rashiSize = Math.max(0.9, 1.5 * fontScale);
+export function RashiCommentary({ segments, isLoading }: RashiCommentaryProps) {
+  const [fontSize, setFontSize] = useState(RASHI_BASE);
+
+  const decrease = () => setFontSize(f => +(Math.max(f - RASHI_STEP, RASHI_MIN)).toFixed(2));
+  const increase = () => setFontSize(f => +(Math.min(f + RASHI_STEP, RASHI_MAX)).toFixed(2));
+
   if (isLoading) {
     return (
       <div className="w-full max-w-3xl mx-auto px-4 mt-10 space-y-3">
@@ -32,14 +40,31 @@ export function RashiCommentary({ segments, isLoading, fontScale = 1 }: RashiCom
       className="w-full max-w-3xl mx-auto px-4 mt-10 pb-6"
       data-testid="container-rashi-commentary"
     >
-      {/* Section label */}
-      <h2
-        className="text-lg font-bold text-primary text-right mb-4"
-        dir="rtl"
-        data-testid="text-rashi-label"
-      >
-        פירוש רש״י
-      </h2>
+      {/* Section label + font controls */}
+      <div className="flex items-center justify-between mb-4" dir="rtl">
+        <h2
+          className="text-lg font-bold text-primary"
+          style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+          data-testid="text-rashi-label"
+        >
+          פירוש רש״י
+        </h2>
+
+        <div className="flex items-center gap-1" dir="ltr">
+          <button
+            onClick={decrease}
+            disabled={fontSize <= RASHI_MIN}
+            aria-label="הקטן גופן רש״י"
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
+          >−</button>
+          <button
+            onClick={increase}
+            disabled={fontSize >= RASHI_MAX}
+            aria-label="הגדל גופן רש״י"
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
+          >+</button>
+        </div>
+      </div>
 
       {segments.length > 0 ? (
         <div className="space-y-3" dir="rtl" data-testid="text-rashi-content">
@@ -48,12 +73,11 @@ export function RashiCommentary({ segments, isLoading, fontScale = 1 }: RashiCom
               key={i}
               className={[
                 'rounded-xl border border-primary/20 bg-card px-5 py-4 text-right shadow-sm',
-                // style <b> (dibur hamatchil) inside each card
                 '[&_b]:font-bold [&_b]:text-primary [&_b]:text-[1.05em]',
               ].join(' ')}
               style={{
                 fontFamily: 'Frank Ruhl Libre, serif',
-                fontSize: `${rashiSize}rem`,
+                fontSize: `${fontSize}rem`,
                 lineHeight: '2.1',
                 backgroundImage:
                   'linear-gradient(160deg, hsl(var(--primary)/0.04), hsl(var(--primary)/0.10))',
@@ -61,7 +85,6 @@ export function RashiCommentary({ segments, isLoading, fontScale = 1 }: RashiCom
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
-              // Render Sefaria HTML as-is — <b> tags intact, no text manipulation
               dangerouslySetInnerHTML={{ __html: html }}
             />
           ))}

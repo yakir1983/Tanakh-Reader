@@ -13,18 +13,12 @@ import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
 import type { TanachBook } from '@/lib/tanach-data';
 
-// fontScale: 1.0 = 100 %. Verse renders at 5rem × scale; secondary text at 1.5rem × scale.
-const SCALE_MIN     = 0.5;
-const SCALE_MAX     = 1.6;
-const SCALE_STEP    = 0.1;
-const SCALE_DEFAULT = 1.0;
 
 export default function Home() {
   const [book,     setBook]     = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
   const [chapter,  setChapter]  = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
   const [verse,    setVerse]    = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
-  const [isDark,     setIsDark]     = useState(false);
-  const [fontScale,  setFontScale]  = useState(SCALE_DEFAULT);
+  const [isDark,   setIsDark]   = useState(false);
   const [aiAnswer,  setAiAnswer]  = useState('');
   const [navError,  setNavError]  = useState('');
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -189,20 +183,10 @@ export default function Home() {
 
   const currentBook = getBookByEnglish(book);
 
-  // ── Touch gestures ────────────────────────────────────────────────────────
-  // Each pinchStep (18px) maps to one SCALE_STEP increment.
-  const handlePinch = useCallback((delta: number) => {
-    setFontScale(s =>
-      delta > 0
-        ? Math.min(+(s + SCALE_STEP).toFixed(2), SCALE_MAX)
-        : Math.max(+(s - SCALE_STEP).toFixed(2), SCALE_MIN),
-    );
-  }, []);
-
+  // ── Touch gestures (swipe only) ──────────────────────────────────────────
   const gestureRef = useGestures<HTMLDivElement>({
     onSwipeRight: () => { if (!isAtStart) goPrev(); },
     onSwipeLeft:  () => { if (!isAtEnd)   goNext(); },
-    onPinchZoom:  handlePinch,
   });
 
   const ctrlBtn = () => [
@@ -237,25 +221,12 @@ export default function Home() {
           </button>
           <p className="text-sm text-muted-foreground" dir="rtl">לימוד התנ״ך עם פירוש רש״י</p>
 
-          {/* Controls — font size + dark mode + home */}
+          {/* Controls — dark mode + home */}
           <div className="flex items-center justify-center gap-2 pt-3 flex-wrap">
             <button onClick={goHome} data-testid="button-home"
               className={ctrlBtn()} title="חזרה לבראשית א׳:א׳" aria-label="בית">
               <HomeIcon className="w-4 h-4" />
               <span dir="rtl">בית</span>
-            </button>
-
-            <div className="w-px h-5 bg-border mx-1" />
-
-            <button onClick={() => setFontScale(s => Math.max(+(s - SCALE_STEP).toFixed(2), SCALE_MIN))}
-              disabled={fontScale <= SCALE_MIN} data-testid="button-font-decrease"
-              className={ctrlBtn()}>
-              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
-            </button>
-            <button onClick={() => setFontScale(s => Math.min(+(s + SCALE_STEP).toFixed(2), SCALE_MAX))}
-              disabled={fontScale >= SCALE_MAX} data-testid="button-font-increase"
-              className={ctrlBtn()}>
-              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
             </button>
 
             <div className="w-px h-5 bg-border mx-1" />
@@ -333,14 +304,12 @@ export default function Home() {
           verse={verse}
           verseText={verseText}
           isLoading={loadingVerse}
-          fontScale={fontScale}
         />
 
         {/* ── Rashi ───────────────────────────────────────────────── */}
         <RashiCommentary
           segments={rashiSegments ?? []}
           isLoading={loadingRashi}
-          fontScale={fontScale}
         />
 
         {/* ── Aramaic translation / Plain-language explanation ─────── */}
@@ -349,14 +318,12 @@ export default function Home() {
             translation={aramaicTranslation}
             isLoading={loadingTranslation}
             kind="translation"
-            fontScale={fontScale}
           />
         ) : (
           <AramaicTranslation
             translation={verseExplanation}
             isLoading={loadingExplanation}
             kind="explanation"
-            fontScale={fontScale}
           />
         )}
 
