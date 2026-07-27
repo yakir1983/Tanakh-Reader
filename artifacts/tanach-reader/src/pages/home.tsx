@@ -214,12 +214,11 @@ export default function Home() {
       <span
         dir="rtl"
         aria-hidden="true"
-        className="bsd-glow fixed top-3 right-4 z-50 select-none pointer-events-none"
+        className="bsd-glow fixed top-3 right-4 z-50 select-none pointer-events-none text-primary"
         style={{
-          fontFamily: '"Suez One", "Frank Ruhl Libre", serif',
+          fontFamily: 'Frank Ruhl Libre, serif',
           fontSize: '1.05rem',
-          fontWeight: 400,
-          color: 'hsl(270 55% 62%)',
+          fontWeight: 700,
           letterSpacing: '0.02em',
         }}
       >
