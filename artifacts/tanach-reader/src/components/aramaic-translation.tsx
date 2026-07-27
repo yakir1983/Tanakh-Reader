@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Languages, BookOpen } from 'lucide-react';
 
@@ -24,17 +23,8 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-const BOX_BASE = 1.2;  // default & absolute minimum — do not change
-const BOX_STEP = 0.1;
-const BOX_MIN  = 1.2;  // locked: cannot go below default
-const BOX_MAX  = 1.7;  // 5 steps above base
-
 export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
-  const [fontSize, setFontSize] = useState(BOX_BASE);
-
-  const decrease = () => setFontSize(f => +(Math.max(f - BOX_STEP, BOX_MIN)).toFixed(2));
-  const increase = () => setFontSize(f => +(Math.min(f + BOX_STEP, BOX_MAX)).toFixed(2));
 
   if (isLoading) {
     return (
@@ -66,30 +56,11 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
         className="rounded-xl border px-5 py-4"
         style={{ fontFamily: 'Frank Ruhl Libre, serif', background: VIOLET.bg, borderColor: VIOLET.border }}
       >
-        {/* Title row + font controls */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
-            <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
-          </div>
-
-          <div className="flex items-center gap-1" dir="ltr">
-            <button
-              onClick={decrease}
-              disabled={fontSize <= BOX_MIN}
-              aria-label="הקטן גופן"
-              className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
-            >−</button>
-            <button
-              onClick={increase}
-              disabled={fontSize >= BOX_MAX}
-              aria-label="הגדל גופן"
-              className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
-            >+</button>
-          </div>
+        <div className="flex items-center gap-2 mb-3">
+          <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
+          <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
         </div>
-
-        <p className="text-foreground leading-relaxed" style={{ fontSize: `${fontSize}rem`, lineHeight: '2' }}>
+        <p className="text-foreground leading-relaxed" style={{ fontSize: '1.2rem', lineHeight: '2' }}>
           {translation}
         </p>
       </div>
