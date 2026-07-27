@@ -109,11 +109,69 @@ const QA_PROMPT = `You are a Hebrew Bible scholar. Answer questions about Tanach
 Always reply in Hebrew. Keep answers concise: 2-3 sentences maximum.
 Start your answer immediately, no preamble.`;
 
-// ── Translation prompt ──────────────────────────────────────────────────────────
-const TRANSLATE_PROMPT = `You are a Biblical Aramaic expert.
-The verse below is written in Biblical Aramaic (not Hebrew).
-Translate it into clear, simple, modern Hebrew — plain Israeli Hebrew, not Talmudic.
-Return only the translation. No preamble, no explanation, no source text.`;
+// ── Translation helpers ─────────────────────────────────────────────────────────
+
+/** Strip HTML tags and common HTML entities from verse text before sending to AI. */
+function cleanVerseText(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, '')          // remove all HTML tags
+    .replace(/&thinsp;/g,  ' ')
+    .replace(/&nbsp;/g,    ' ')
+    .replace(/&amp;/g,     '&')
+    .replace(/&lt;/g,      '<')
+    .replace(/&gt;/g,      '>')
+    .replace(/[\u0591-\u05AF]/g, '')  // strip cantillation (keep nikud)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ── Translation prompts ─────────────────────────────────────────────────────────
+const TRANSLATE_PROMPT = `You are a Biblical Aramaic expert and translator.
+The verse below is in Biblical Aramaic. Translate the ENTIRE verse into clear, simple, modern Hebrew (plain Israeli Hebrew, not Talmudic).
+Important rules:
+- Translate every word — do not skip or truncate, even if the verse is long.
+- Long lists of Aramaic official titles (e.g. אֲחַשְׁדַּרְפְּנַיָּא, סִגְנַיָּא) should be rendered with their Hebrew equivalents or a brief descriptive phrase.
+- Return ONLY the Hebrew translation. No source text, no preamble, no parentheses with Aramaic words.`;
+
+/** Simpler fallback prompt used on retry — less strict, forces output. */
+const TRANSLATE_PROMPT_FALLBACK = `Translate this Biblical Aramaic verse into modern Hebrew. Be concise but complete. Output only the Hebrew translation.`;
+
+// ── Shared translation helper (with retry) ─────────────────────────────────────
+async function translateAramaic(
+  verseText: string,
+  book?: string,
+  chapter?: number,
+  verse?: number,
+): Promise<string> {
+  const cleaned = cleanVerseText(verseText);
+  const context = `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${cleaned}`;
+
+  // Attempt 1 — full prompt, generous token budget
+  const attempt1 = await openai.chat.completions.create({
+    model: "gpt-5.6-terra",
+    max_completion_tokens: 600,
+    messages: [
+      { role: "system", content: TRANSLATE_PROMPT },
+      { role: "user",   content: context },
+    ],
+  });
+  const text1 = (attempt1.choices[0]?.message?.content ?? "").trim();
+  if (text1.length > 5) return text1;
+
+  // Attempt 2 — simpler prompt, higher token budget
+  const attempt2 = await openai.chat.completions.create({
+    model: "gpt-5.6-terra",
+    max_completion_tokens: 900,
+    messages: [
+      { role: "system", content: TRANSLATE_PROMPT_FALLBACK },
+      { role: "user",   content: cleaned },
+    ],
+  });
+  const text2 = (attempt2.choices[0]?.message?.content ?? "").trim();
+  if (text2.length > 5) return text2;
+
+  return "לא הצלחתי לתרגם את הפסוק.";
+}
 
 // ── POST /api/ai/voice-command ─────────────────────────────────────────────────
 router.post("/ai/voice-command", async (req, res) => {
@@ -137,16 +195,8 @@ router.post("/ai/voice-command", async (req, res) => {
         res.json({ type: "answer", text: "לא נמצא טקסט לתרגום בפסוק הנוכחי." });
         return;
       }
-      const completion = await openai.chat.completions.create({
-        model: "gpt-5.6-terra",
-        max_completion_tokens: 256,
-        messages: [
-          { role: "system", content: TRANSLATE_PROMPT },
-          { role: "user",   content: `ספר ${currentBook || ""}, פרק ${currentChapter || ""}, פסוק ${currentVerse || ""}:\n${currentVerseText}` },
-        ],
-      });
-      const text = (completion.choices[0]?.message?.content ?? "").trim();
-      res.json({ type: "answer", text: text || "לא הצלחתי לתרגם את הפסוק." });
+      const text = await translateAramaic(currentVerseText, currentBook, currentChapter, currentVerse);
+      res.json({ type: "answer", text });
 
     } else if (isQuestion(transcript)) {
       // ── Q&A ──────────────────────────────────────────────────────────────────
@@ -210,16 +260,8 @@ router.post("/ai/translate-verse", async (req, res) => {
   }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
-      max_completion_tokens: 256,
-      messages: [
-        { role: "system", content: TRANSLATE_PROMPT },
-        { role: "user",   content: `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${verseText}` },
-      ],
-    });
-    const translation = (completion.choices[0]?.message?.content ?? "").trim();
-    res.json({ translation: translation || "לא הצלחתי לתרגם את הפסוק." });
+    const translation = await translateAramaic(verseText, book, chapter, verse);
+    res.json({ translation });
   } catch (err) {
     console.error("Translation error:", err);
     res.status(500).json({ error: "Translation failed" });
