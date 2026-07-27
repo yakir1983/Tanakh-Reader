@@ -15,15 +15,20 @@ const FONT_SIZE_STEP    = 0.5;
 const FONT_SIZE_DEFAULT = 5;
 
 export default function Home() {
-  const [book,     setBook]     = useState('Genesis');
-  const [chapter,  setChapter]  = useState(1);
-  const [verse,    setVerse]    = useState(1);
+  const [book,     setBook]     = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
+  const [chapter,  setChapter]  = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
+  const [verse,    setVerse]    = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
   const [isDark,    setIsDark]    = useState(false);
   const [fontSize,  setFontSize]  = useState(FONT_SIZE_DEFAULT);
   const [aiAnswer,  setAiAnswer]  = useState('');
   const [navError,  setNavError]  = useState('');
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
+
+  // ── Persist position to localStorage ─────────────────────────────────────
+  useEffect(() => { localStorage.setItem('tanach_book',    book);           }, [book]);
+  useEffect(() => { localStorage.setItem('tanach_chapter', String(chapter)); }, [chapter]);
+  useEffect(() => { localStorage.setItem('tanach_verse',   String(verse));   }, [verse]);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
