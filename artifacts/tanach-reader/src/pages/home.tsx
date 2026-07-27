@@ -12,17 +12,16 @@ import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
 import type { TanachBook } from '@/lib/tanach-data';
-const VERSE_SIZE_DEFAULT = 1.6;   // default & absolute minimum — do not change
-const VERSE_SIZE_STEP    = 0.15;
-const VERSE_SIZE_MIN     = 1.6;   // locked: cannot go below default
-const VERSE_SIZE_MAX     = 2.35;  // 5 steps above base
+// Exactly 3 fixed verse sizes (px). Buttons cycle through this array only.
+const VERSE_SIZES   = [15, 18, 36] as const;
+const VERSE_DEFAULT = 1; // index → 18px
 
 export default function Home() {
   const [book,      setBook]      = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
   const [chapter,   setChapter]   = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
   const [verse,     setVerse]     = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
   const [isDark,    setIsDark]    = useState(false);
-  const [verseSize, setVerseSize] = useState(VERSE_SIZE_DEFAULT);
+  const [verseSizeIdx, setVerseSizeIdx] = useState(VERSE_DEFAULT);
   const [aiAnswer,  setAiAnswer]  = useState('');
   const [navError,  setNavError]  = useState('');
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -236,15 +235,15 @@ export default function Home() {
             <div className="w-px h-5 bg-border mx-1" />
 
             <button
-              onClick={() => setVerseSize(s => +(Math.max(s - VERSE_SIZE_STEP, VERSE_SIZE_MIN)).toFixed(2))}
-              disabled={verseSize <= VERSE_SIZE_MIN}
+              onClick={() => setVerseSizeIdx(i => Math.max(i - 1, 0))}
+              disabled={verseSizeIdx === 0}
               data-testid="button-font-decrease"
               className={ctrlBtn()}>
               <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
             </button>
             <button
-              onClick={() => setVerseSize(s => +(Math.min(s + VERSE_SIZE_STEP, VERSE_SIZE_MAX)).toFixed(2))}
-              disabled={verseSize >= VERSE_SIZE_MAX}
+              onClick={() => setVerseSizeIdx(i => Math.min(i + 1, VERSE_SIZES.length - 1))}
+              disabled={verseSizeIdx === VERSE_SIZES.length - 1}
               data-testid="button-font-increase"
               className={ctrlBtn()}>
               <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
@@ -325,7 +324,7 @@ export default function Home() {
           verse={verse}
           verseText={verseText}
           isLoading={loadingVerse}
-          fontSize={verseSize}
+          fontSize={VERSE_SIZES[verseSizeIdx]}
         />
 
         {/* ── Rashi ───────────────────────────────────────────────── */}
