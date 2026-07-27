@@ -1,5 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Languages, BookOpen } from 'lucide-react';
+
+const EXPLAIN_BASE = 1.2;   // rem — default & absolute minimum
+const EXPLAIN_STEP = 0.15;  // rem — comfortable step
+const EXPLAIN_MAX  = 1.2 + 3 * 0.15; // rem — 3 steps above base (1.65rem)
 
 type BoxKind = 'translation' | 'explanation';
 
@@ -25,6 +30,8 @@ const VIOLET = {
 
 export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
+  const [fontSize, setFontSize] = useState(EXPLAIN_BASE);
+  const isExplanation = kind === 'explanation';
 
   if (isLoading) {
     return (
@@ -56,11 +63,29 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
         className="rounded-xl border px-5 py-4"
         style={{ fontFamily: 'Frank Ruhl Libre, serif', background: VIOLET.bg, borderColor: VIOLET.border }}
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
-          <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
+            <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
+          </div>
+          {isExplanation && (
+            <div className="flex items-center gap-1" dir="ltr">
+              <button
+                onClick={() => setFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
+                disabled={fontSize <= EXPLAIN_BASE}
+                aria-label="הקטן גופן"
+                className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
+              >−</button>
+              <button
+                onClick={() => setFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
+                disabled={fontSize >= EXPLAIN_MAX}
+                aria-label="הגדל גופן"
+                className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
+              >+</button>
+            </div>
+          )}
         </div>
-        <p className="text-foreground leading-relaxed" style={{ fontSize: '1.2rem', lineHeight: '2' }}>
+        <p className="text-foreground leading-relaxed" style={{ fontSize: isExplanation ? `${fontSize}rem` : '1.2rem', lineHeight: '2' }}>
           {translation}
         </p>
       </div>
