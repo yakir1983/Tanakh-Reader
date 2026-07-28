@@ -14,6 +14,8 @@ interface AramaicTranslationProps {
   /** 'translation' → "תרגום מארמית לעברית" with Languages icon (default)
    *  'explanation'  → "במילים פשוטות" with BookOpen icon */
   kind?: BoxKind;
+  /** When provided, overrides the internal font-size state and hides internal ±buttons */
+  externalFontSize?: number;
 }
 
 const KINDS: Record<BoxKind, { title: string; Icon: typeof Languages }> = {
@@ -28,10 +30,14 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-export function AramaicTranslation({ translation, isLoading, kind = 'translation' }: AramaicTranslationProps) {
+export function AramaicTranslation({ translation, isLoading, kind = 'translation', externalFontSize }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
-  const [fontSize, setFontSize] = useState(EXPLAIN_BASE);
+  const [internalFontSize, setInternalFontSize] = useState(EXPLAIN_BASE);
   const isExplanation = kind === 'explanation';
+  // Use external font size when provided (controlled mode), otherwise internal state
+  const fontSize = externalFontSize ?? internalFontSize;
+  const setFontSize = externalFontSize !== undefined ? () => {} : setInternalFontSize;
+  const showInternalControls = isExplanation && externalFontSize === undefined;
 
   if (isLoading) {
     return (
@@ -68,17 +74,17 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
             <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
           </div>
-          {isExplanation && (
+          {showInternalControls && (
             <div className="flex items-center gap-1" dir="ltr">
               <button
-                onClick={() => setFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
-                disabled={fontSize <= EXPLAIN_BASE}
+                onClick={() => setInternalFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
+                disabled={internalFontSize <= EXPLAIN_BASE}
                 aria-label="הקטן גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >−</button>
               <button
-                onClick={() => setFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
-                disabled={fontSize >= EXPLAIN_MAX}
+                onClick={() => setInternalFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
+                disabled={internalFontSize >= EXPLAIN_MAX}
                 aria-label="הגדל גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >+</button>
