@@ -12,8 +12,11 @@ const TRANSLATE_SIGNALS = [
 // Hebrew question-signal words — if transcript contains any, route to Q&A
 const QUESTION_SIGNALS = [
   "מה ", "מי ", "למה ", "מדוע ", "כיצד ", "איך ", "האם ",
+  "היכן ", "איפה ", "מתי ", "כמה ", "מנין ",
   "הסבר", "ספר לי", "פירוש", "רש\"י", "רשי",
   "על מה", "מה אומר", "מה כתוב", "מה פירוש",
+  "מי הם", "מי היה", "מי הייתה", "מי הוא", "מי היא",
+  "מה קרה", "מה הסיפור", "מה עשה", "מה עשתה",
 ];
 
 function wordBoundaryMatch(text: string, signal: string): boolean {
@@ -44,41 +47,101 @@ const BOOK_MAP_STR = `בראשית=Genesis, שמות=Exodus, ויקרא=Leviticu
 
 // ── Biblical character → first major appearance ────────────────────────────────
 const CHARACTERS_MAP = `If only a character name is mentioned (no explicit book/chapter/verse), use these defaults:
-משה / מרע"ה → {"book":"Exodus","chapter":2,"verse":1}
-אברהם / אברם → {"book":"Genesis","chapter":12,"verse":1}
-יצחק → {"book":"Genesis","chapter":21,"verse":1}
-יעקב / ישראל האבות → {"book":"Genesis","chapter":25,"verse":19}
-יוסף → {"book":"Genesis","chapter":37,"verse":1}
+משה / מרע"ה / משה רבנו → {"book":"Exodus","chapter":2,"verse":1}
+אברהם אבינו / אברהם / אברם → {"book":"Genesis","chapter":12,"verse":1}
+שרה אמנו / שרה / שרי → {"book":"Genesis","chapter":12,"verse":5}
+יצחק אבינו / יצחק → {"book":"Genesis","chapter":21,"verse":1}
+רבקה / רבקה אמנו → {"book":"Genesis","chapter":24,"verse":15}
+יעקב אבינו / יעקב / ישראל → {"book":"Genesis","chapter":25,"verse":19}
+לאה אמנו / לאה → {"book":"Genesis","chapter":29,"verse":16}
+רחל אמנו / רחל → {"book":"Genesis","chapter":29,"verse":16}
+לבן הארמי / לבן → {"book":"Genesis","chapter":29,"verse":1}
+עשו / אדום / עשיו → {"book":"Genesis","chapter":25,"verse":25}
+יוסף הצדיק / יוסף → {"book":"Genesis","chapter":37,"verse":1}
+בנימין → {"book":"Genesis","chapter":35,"verse":18}
+ראובן → {"book":"Genesis","chapter":29,"verse":32}
+שמעון → {"book":"Genesis","chapter":29,"verse":33}
+לוי → {"book":"Genesis","chapter":29,"verse":34}
+יהודה → {"book":"Genesis","chapter":29,"verse":35}
+דן → {"book":"Genesis","chapter":30,"verse":6}
+נפתלי → {"book":"Genesis","chapter":30,"verse":8}
+גד → {"book":"Genesis","chapter":30,"verse":11}
+אשר → {"book":"Genesis","chapter":30,"verse":13}
+יששכר → {"book":"Genesis","chapter":30,"verse":18}
+זבולון → {"book":"Genesis","chapter":30,"verse":20}
+דינה → {"book":"Genesis","chapter":30,"verse":21}
+תמר → {"book":"Genesis","chapter":38,"verse":6}
+יהודה ותמר → {"book":"Genesis","chapter":38,"verse":1}
+אסנת → {"book":"Genesis","chapter":41,"verse":45}
+פוטיפר → {"book":"Genesis","chapter":37,"verse":36}
 נח → {"book":"Genesis","chapter":6,"verse":9}
-אדם / חוה → {"book":"Genesis","chapter":2,"verse":7}
-קין / הבל → {"book":"Genesis","chapter":4,"verse":1}
-אהרן → {"book":"Exodus","chapter":4,"verse":14}
-מרים → {"book":"Exodus","chapter":15,"verse":20}
-יהושע → {"book":"Joshua","chapter":1,"verse":1}
-דבורה → {"book":"Judges","chapter":4,"verse":1}
+שם חם ויפת / בני נח → {"book":"Genesis","chapter":9,"verse":18}
+אדם הראשון / אדם → {"book":"Genesis","chapter":2,"verse":7}
+חוה → {"book":"Genesis","chapter":2,"verse":20}
+קין → {"book":"Genesis","chapter":4,"verse":1}
+הבל → {"book":"Genesis","chapter":4,"verse":1}
+בלעם → {"book":"Numbers","chapter":22,"verse":5}
+בלק → {"book":"Numbers","chapter":22,"verse":2}
+פינחס → {"book":"Numbers","chapter":25,"verse":7}
+קורח → {"book":"Numbers","chapter":16,"verse":1}
+אהרן הכהן / אהרן → {"book":"Exodus","chapter":4,"verse":14}
+מרים הנביאה / מרים → {"book":"Exodus","chapter":15,"verse":20}
+יהושע בן נון / יהושע → {"book":"Joshua","chapter":1,"verse":1}
+כלב / כלב בן יפונה → {"book":"Numbers","chapter":13,"verse":6}
+דבורה הנביאה / דבורה → {"book":"Judges","chapter":4,"verse":1}
+יעל → {"book":"Judges","chapter":4,"verse":17}
+סיסרא → {"book":"Judges","chapter":4,"verse":2}
 גדעון → {"book":"Judges","chapter":6,"verse":1}
+יפתח → {"book":"Judges","chapter":11,"verse":1}
 שמשון → {"book":"Judges","chapter":13,"verse":1}
-שמואל → {"book":"I Samuel","chapter":1,"verse":1}
-חנה → {"book":"I Samuel","chapter":1,"verse":1}
+דלילה → {"book":"Judges","chapter":16,"verse":4}
+עלי הכהן / עלי → {"book":"I Samuel","chapter":1,"verse":9}
+שמואל הנביא / שמואל → {"book":"I Samuel","chapter":1,"verse":1}
+חנה אם שמואל / חנה → {"book":"I Samuel","chapter":1,"verse":1}
 שאול המלך / שאול → {"book":"I Samuel","chapter":9,"verse":1}
-דוד המלך / דוד → {"book":"I Samuel","chapter":16,"verse":1}
+יהונתן / יהונתן בן שאול → {"book":"I Samuel","chapter":14,"verse":1}
+דוד המלך / דוד / דוד בן ישי → {"book":"I Samuel","chapter":16,"verse":1}
+גוליית → {"book":"I Samuel","chapter":17,"verse":4}
+אביגיל → {"book":"I Samuel","chapter":25,"verse":3}
+בת שבע → {"book":"II Samuel","chapter":11,"verse":3}
+אוריה החיתי / אוריה → {"book":"II Samuel","chapter":11,"verse":3}
+אבשלום → {"book":"II Samuel","chapter":13,"verse":1}
+אמנון → {"book":"II Samuel","chapter":13,"verse":1}
+יואב → {"book":"II Samuel","chapter":2,"verse":13}
 שלמה המלך / שלמה → {"book":"I Kings","chapter":3,"verse":5}
-אליהו הנביא / אליהו → {"book":"I Kings","chapter":17,"verse":1}
-אלישע → {"book":"I Kings","chapter":19,"verse":19}
-ישעיהו / ישעיה הנביא → {"book":"Isaiah","chapter":1,"verse":1}
-ירמיהו / ירמיה הנביא → {"book":"Jeremiah","chapter":1,"verse":1}
-יחזקאל הנביא → {"book":"Ezekiel","chapter":1,"verse":1}
+ירבעם → {"book":"I Kings","chapter":11,"verse":26}
+אחאב → {"book":"I Kings","chapter":16,"verse":29}
+איזבל → {"book":"I Kings","chapter":16,"verse":31}
+אליהו הנביא / אליהו / אליהו התשבי → {"book":"I Kings","chapter":17,"verse":1}
+אלישע הנביא / אלישע → {"book":"I Kings","chapter":19,"verse":19}
+חזקיהו המלך / חזקיהו → {"book":"II Kings","chapter":18,"verse":1}
+יאשיהו המלך / יאשיהו → {"book":"II Kings","chapter":22,"verse":1}
+ישעיהו הנביא / ישעיהו / ישעיה → {"book":"Isaiah","chapter":1,"verse":1}
+ירמיהו הנביא / ירמיה / ירמיהו → {"book":"Jeremiah","chapter":1,"verse":1}
+יחזקאל הנביא / יחזקאל → {"book":"Ezekiel","chapter":1,"verse":1}
+הושע הנביא / הושע → {"book":"Hosea","chapter":1,"verse":1}
+עמוס הנביא / עמוס → {"book":"Amos","chapter":1,"verse":1}
 יונה הנביא / יונה → {"book":"Jonah","chapter":1,"verse":1}
+מיכה הנביא / מיכה → {"book":"Micah","chapter":1,"verse":1}
+נחום הנביא / נחום → {"book":"Nahum","chapter":1,"verse":1}
+חבקוק הנביא / חבקוק → {"book":"Habakkuk","chapter":1,"verse":1}
+מלאכי הנביא / מלאכי → {"book":"Malachi","chapter":1,"verse":1}
 דניאל → {"book":"Daniel","chapter":1,"verse":1}
-אסתר המלכה / אסתר → {"book":"Esther","chapter":2,"verse":7}
+חנניה מישאל ועזריה / שדרך מישך ועבד נגו → {"book":"Daniel","chapter":1,"verse":6}
+אסתר המלכה / אסתר / הדסה → {"book":"Esther","chapter":2,"verse":7}
 מרדכי → {"book":"Esther","chapter":2,"verse":5}
-רות → {"book":"Ruth","chapter":1,"verse":1}
+המן / המן האגגי → {"book":"Esther","chapter":3,"verse":1}
+אחשורוש → {"book":"Esther","chapter":1,"verse":1}
+ושתי → {"book":"Esther","chapter":1,"verse":9}
+רות / רות המואביה → {"book":"Ruth","chapter":1,"verse":1}
+נעמי → {"book":"Ruth","chapter":1,"verse":2}
 בועז → {"book":"Ruth","chapter":2,"verse":1}
 עזרא → {"book":"Ezra","chapter":1,"verse":1}
-נחמיה → {"book":"Nehemiah","chapter":1,"verse":1}`;
+נחמיה → {"book":"Nehemiah","chapter":1,"verse":1}
+איוב → {"book":"Job","chapter":1,"verse":1}`;
 
 // ── Biblical topics/events map ─────────────────────────────────────────────────
-const TOPICS_MAP = `If a well-known biblical event or topic is mentioned (no explicit book/chapter), use these:
+const TOPICS_MAP = `If a well-known biblical event, topic, or family/relational context is mentioned (no explicit book/chapter), use these:
 בריאת העולם / שבעת ימי הבריאה → {"book":"Genesis","chapter":1,"verse":1}
 בריאת האדם / אדם הראשון → {"book":"Genesis","chapter":2,"verse":7}
 גן עדן → {"book":"Genesis","chapter":2,"verse":8}
@@ -90,18 +153,34 @@ const TOPICS_MAP = `If a well-known biblical event or topic is mentioned (no exp
 המבול / נח ותיבה / תיבת נח → {"book":"Genesis","chapter":6,"verse":9}
 קשת בענן / ברית הקשת → {"book":"Genesis","chapter":9,"verse":12}
 מגדל בבל → {"book":"Genesis","chapter":11,"verse":1}
+לידת יצחק / ברית מילה / הגר וישמעאל → {"book":"Genesis","chapter":17,"verse":1}
 ברית בין הבתרים → {"book":"Genesis","chapter":15,"verse":1}
 לוט ועיר סדום / סדום ועמורה → {"book":"Genesis","chapter":18,"verse":20}
 הפיכת סדום / הצלת לוט → {"book":"Genesis","chapter":19,"verse":1}
-עקדת יצחק / עקידה → {"book":"Genesis","chapter":22,"verse":1}
+עקדת יצחק / עקידה / הר המוריה → {"book":"Genesis","chapter":22,"verse":1}
+שידוך רבקה / אליעזר ורבקה / עבד אברהם → {"book":"Genesis","chapter":24,"verse":1}
+יעקב ועשו נולדים / תולדות יצחק → {"book":"Genesis","chapter":25,"verse":19}
+עשו מוכר הבכורה / בכורת עשו → {"book":"Genesis","chapter":25,"verse":29}
+ברכת יצחק / יעקב מקבל ברכה / יעקב ועשו ברכה → {"book":"Genesis","chapter":27,"verse":1}
+בריחת יעקב מעשו / יעקב בורח → {"book":"Genesis","chapter":27,"verse":41}
 סולם יעקב / חלום יעקב → {"book":"Genesis","chapter":28,"verse":10}
-יעקב ועשו / ברכת יצחק → {"book":"Genesis","chapter":27,"verse":1}
-מאבק יעקב עם המלאך → {"book":"Genesis","chapter":32,"verse":25}
+יעקב ולבן / יעקב מגיע לחרן / לבן הארמי ויעקב → {"book":"Genesis","chapter":29,"verse":1}
+נישואי יעקב ורחל / יעקב ורחל ולאה / שתי נשות יעקב → {"book":"Genesis","chapter":29,"verse":16}
+לידת שבטי ישראל / בני יעקב / שנים עשר שבטים → {"book":"Genesis","chapter":29,"verse":31}
+לידת יוסף / רחל יולדת / יוסף בן רחל → {"book":"Genesis","chapter":30,"verse":22}
+יעקב עוזב את לבן / יציאת יעקב מחרן → {"book":"Genesis","chapter":31,"verse":1}
+מאבק יעקב עם המלאך / יעקב נהיה ישראל → {"book":"Genesis","chapter":32,"verse":25}
+פגישת יעקב ועשו / אחים מתפייסים → {"book":"Genesis","chapter":33,"verse":1}
+לידת בנימין / מות רחל / רחל מתה → {"book":"Genesis","chapter":35,"verse":16}
 כתונת הפסים / יוסף ואחיו → {"book":"Genesis","chapter":37,"verse":1}
 חלומות יוסף → {"book":"Genesis","chapter":37,"verse":5}
-יוסף בבית פוטיפר → {"book":"Genesis","chapter":39,"verse":1}
 יוסף בבור / מכירת יוסף → {"book":"Genesis","chapter":37,"verse":23}
+יוסף בבית פוטיפר / אשת פוטיפר → {"book":"Genesis","chapter":39,"verse":1}
+יוסף בבית הסוהר / יוסף בכלא → {"book":"Genesis","chapter":39,"verse":20}
 יוסף מפרש חלומות / חלומות פרעה → {"book":"Genesis","chapter":41,"verse":1}
+יוסף נגלה לאחיו / יוסף מתגלה → {"book":"Genesis","chapter":45,"verse":1}
+ירידת יעקב למצרים / בני ישראל במצרים → {"book":"Genesis","chapter":46,"verse":1}
+ברכת יעקב לבניו / יעקב מברך שבטים → {"book":"Genesis","chapter":49,"verse":1}
 הסנה הבוער → {"book":"Exodus","chapter":3,"verse":1}
 מכות מצרים / עשר מכות → {"book":"Exodus","chapter":7,"verse":14}
 מכת בכורות / מכה אחרונה → {"book":"Exodus","chapter":12,"verse":29}
@@ -169,10 +248,13 @@ Return exactly one of:
 
 Rules:
 - If explicit book+chapter+verse given → use them directly.
-- If a character name matches → use character defaults.
+- If a character name or alias matches (including honorifics like "אבינו", "אמנו", "המלך", "הנביא", "הצדיק") → use character defaults.
+- If a relational phrase is used ("אביו של יוסף" → יעקב, "בנות לבן" → לאה ורחל → Genesis 29, "אחי יוסף" → Genesis 37, "בעלה של רחל" → יעקב → Genesis 29) → resolve to the relevant character or event.
 - If a topic/event name matches → use topic defaults.
 - If only chapter/verse without book → use book "CURRENT".
 - Default chapter=1, verse=1 if not mentioned.
+- If the input is a place name associated with a biblical event (e.g. "חרן", "באר שבע", "בית לחם") → navigate to the most significant event at that place.
+- If nothing in the input maps to a Bible reference → {"found":false}.
 
 Examples:
 "תהילים פרק כב פסוק א" → {"found":true,"book":"Psalms","chapter":22,"verse":1}
@@ -181,13 +263,28 @@ Examples:
 "עקדת יצחק" → {"found":true,"book":"Genesis","chapter":22,"verse":1}
 "חטא העגל" → {"found":true,"book":"Exodus","chapter":32,"verse":1}
 "דוד המלך" → {"found":true,"book":"I Samuel","chapter":16,"verse":1}
+"לבן הארמי" → {"found":true,"book":"Genesis","chapter":29,"verse":1}
+"רחל ולאה" → {"found":true,"book":"Genesis","chapter":29,"verse":16}
+"בנות לבן" → {"found":true,"book":"Genesis","chapter":29,"verse":16}
+"אביו של יוסף" → {"found":true,"book":"Genesis","chapter":25,"verse":19}
+"אחי יוסף" → {"found":true,"book":"Genesis","chapter":37,"verse":1}
 "פרק ה" → {"found":true,"book":"CURRENT","chapter":5,"verse":1}
-"hello" → {"found":false}`;
+"hello" → {"found":false}
+"שלום" → {"found":false}`;
 
 // ── Q&A prompt ─────────────────────────────────────────────────────────────────
-const QA_PROMPT = `You are a Hebrew Bible scholar. Answer questions about Tanach and Rashi commentary.
-Always reply in Hebrew. Keep answers concise: 2-3 sentences maximum.
-Start your answer immediately, no preamble.`;
+const QA_PROMPT = `אתה מומחה לתנ"ך, פרשנות חז"ל ורש"י. עניין בשאלות על:
+- זהות דמויות תנ"ך (כולל שמות, יחסי משפחה, תפקידים)
+- אירועים ומקומות מקראיים
+- פרשנות פסוקים ומשמעותם הפנימית
+- הקשרים בין דמויות (למשל: "מי הוא לבן הארמי?" → דודו של יעקב, אחי רבקה; "מה הקשר בין רחל ולאה?" → שתיהן בנות לבן ונשות יעקב)
+
+כללים:
+- ענה תמיד בעברית תקנית ומודרנית.
+- תשובה קצרה: 2–3 משפטים בלבד.
+- התחל מיד בתשובה, ללא הקדמה.
+- הזכר את הספר והפרק הרלוונטי כשמועיל (למשל: "הסיפור מופיע בבראשית פרק כט").
+- כנה דמויות בכבוד: "אברהם אבינו", "משה רבנו", "דוד המלך" וכד'.`;
 
 // ── Translation helpers ─────────────────────────────────────────────────────────
 
