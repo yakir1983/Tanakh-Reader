@@ -179,6 +179,9 @@ export default function TikkunHaklali() {
   });
   useEffect(() => { storageSet(FONT_SIZE_KEY, String(fontSize)); }, [fontSize]);
 
+  // ── Scroll to top on psalm change ────────────────────────────────────────
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [idx]);
+
   const psalm = TIKKUN_PSALMS[idx];
 
   const { data: verses, isLoading: loadingVerses } = useQuery({
