@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Languages, BookOpen } from 'lucide-react';
+import { storageGet, storageSet } from '@/lib/safe-storage';
 
 const EXPLAIN_BASE = 1.2;   // rem — default & absolute minimum
 const EXPLAIN_STEP = 0.15;  // rem — comfortable step
@@ -14,8 +15,8 @@ interface AramaicTranslationProps {
   /** 'translation' → "תרגום מארמית לעברית" with Languages icon (default)
    *  'explanation'  → "במילים פשוטות" with BookOpen icon */
   kind?: BoxKind;
-  /** When provided, overrides the internal font-size state and hides internal ±buttons */
-  externalFontSize?: number;
+  /** localStorage key to persist the internal font-size choice */
+  storageKey?: string;
 }
 
 const KINDS: Record<BoxKind, { title: string; Icon: typeof Languages }> = {
@@ -30,14 +31,21 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-export function AramaicTranslation({ translation, isLoading, kind = 'translation', externalFontSize }: AramaicTranslationProps) {
+export function AramaicTranslation({ translation, isLoading, kind = 'translation', storageKey }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
-  const [internalFontSize, setInternalFontSize] = useState(EXPLAIN_BASE);
   const isExplanation = kind === 'explanation';
-  // Use external font size when provided (controlled mode), otherwise internal state
-  const fontSize = externalFontSize ?? internalFontSize;
-  const setFontSize = externalFontSize !== undefined ? () => {} : setInternalFontSize;
-  const showInternalControls = isExplanation && externalFontSize === undefined;
+
+  const [fontSize, setFontSizeState] = useState<number>(() => {
+    if (!storageKey) return EXPLAIN_BASE;
+    const saved = parseFloat(storageGet(storageKey, String(EXPLAIN_BASE)));
+    return Number.isFinite(saved) && saved >= EXPLAIN_BASE && saved <= EXPLAIN_MAX ? saved : EXPLAIN_BASE;
+  });
+
+  useEffect(() => {
+    if (storageKey) storageSet(storageKey, String(fontSize));
+  }, [storageKey, fontSize]);
+
+  const setFontSize = (updater: (prev: number) => number) => setFontSizeState(updater);
 
   if (isLoading) {
     return (
@@ -74,17 +82,17 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
             <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
           </div>
-          {showInternalControls && (
+          {isExplanation && (
             <div className="flex items-center gap-1" dir="ltr">
               <button
-                onClick={() => setInternalFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
-                disabled={internalFontSize <= EXPLAIN_BASE}
+                onClick={() => setFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
+                disabled={fontSize <= EXPLAIN_BASE}
                 aria-label="הקטן גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >−</button>
               <button
-                onClick={() => setInternalFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
-                disabled={internalFontSize >= EXPLAIN_MAX}
+                onClick={() => setFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
+                disabled={fontSize >= EXPLAIN_MAX}
                 aria-label="הגדל גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >+</button>
