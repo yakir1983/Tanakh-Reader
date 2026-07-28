@@ -59,19 +59,60 @@ export function createHebrewSpeechRecognition(
  * Ordered longest-first so multi-word patterns match before single words.
  */
 const SUBSTITUTIONS: [RegExp, string][] = [
-  // Divine names
-  [/אלוקינו/g, 'אלהינו'],
-  [/אלוקיכם/g, 'אלהיכם'],
-  [/אלוקיהם/g, 'אלהיהם'],
-  [/אלוקיך/g,  'אלהיך'],
-  [/אלוקים/g,  'אלהים'],
-  [/ה׳/g,      'יהוה'],
-  [/השם/g,     'יהוה'],
+  // ── Multi-word / longest patterns first ──────────────────────────────────
+  // Book name variants the voice engine garbles
+  [/שיר שירים/g,         'שיר השירים'],
+  [/דברי הימים הראשון/g,  'דברי הימים א'],
+  [/דברי הימים השני/g,    'דברי הימים ב'],
+  [/שמואל הראשון/g,       'שמואל א'],
+  [/שמואל השני/g,         'שמואל ב'],
+  [/מלכים הראשון/g,       'מלכים א'],
+  [/מלכים השני/g,         'מלכים ב'],
+  [/ישעיהו/g,             'ישעיה'],
+  [/ירמיהו/g,             'ירמיה'],
 
-  // Ordinal suffixes the voice engine sometimes adds
+  // Character name mis-recognitions / spelling variants
+  [/גוליית/g,   'גוליית'],   // keep canonical
+  [/גלית/g,     'גוליית'],
+  [/גולית/g,    'גוליית'],
+  [/מפיבושת/g,  'מפיבשת'],
+  [/אתליה/g,    'עתליה'],
+  [/גחזי/g,     'גיחזי'],
+  [/אבישי/g,    'אבישי'],
+  [/צפורה/g,    'ציפורה'],
+  [/עשיו/g,     'עשו'],
+  [/ישמעאל/g,   'ישמעאל'],   // keep
+  [/אלישיב/g,   'אלישיב'],
+
+  // Divine names
+  [/אלוקינו/g,  'אלהינו'],
+  [/אלוקיכם/g,  'אלהיכם'],
+  [/אלוקיהם/g,  'אלהיהם'],
+  [/אלוקיך/g,   'אלהיך'],
+  [/אלוקים/g,   'אלהים'],
+  [/ה׳/g,       'יהוה'],
+  [/השם/g,      'יהוה'],
+
+  // Navigation keyword variants
+  [/בפרק/g,    'פרק'],
+  [/בפסוק/g,   'פסוק'],
+  [/בספר/g,    'ספר'],
+
+  // Ordinal words the voice engine adds for chapter/verse numbers
   [/ראשון/g,   'א'],
+  [/ראשונה/g,  'א'],
   [/שני/g,     'ב'],
   [/שנייה/g,   'ב'],
+  [/שלישי/g,   'ג'],
+  [/שלישית/g,  'ג'],
+  [/רביעי/g,   'ד'],
+  [/רביעית/g,  'ד'],
+  [/חמישי/g,   'ה'],
+  [/חמישית/g,  'ה'],
+  [/שישי/g,    'ו'],
+  [/שישית/g,   'ו'],
+  [/שביעי/g,   'ז'],
+  [/שביעית/g,  'ז'],
 ];
 
 /** Normalise a transcript: apply substitutions then strip nikud/cantillation */

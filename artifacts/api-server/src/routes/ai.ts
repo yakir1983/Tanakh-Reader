@@ -46,99 +46,190 @@ const BOOK_MAP_STR = `בראשית=Genesis, שמות=Exodus, ויקרא=Leviticu
 נחמיה=Nehemiah, דברי הימים א=I Chronicles, דברי הימים ב=II Chronicles`;
 
 // ── Biblical character → first major appearance ────────────────────────────────
-const CHARACTERS_MAP = `If only a character name is mentioned (no explicit book/chapter/verse), use these defaults:
-משה / מרע"ה / משה רבנו → {"book":"Exodus","chapter":2,"verse":1}
-אברהם אבינו / אברהם / אברם → {"book":"Genesis","chapter":12,"verse":1}
-שרה אמנו / שרה / שרי → {"book":"Genesis","chapter":12,"verse":5}
-יצחק אבינו / יצחק → {"book":"Genesis","chapter":21,"verse":1}
-רבקה / רבקה אמנו → {"book":"Genesis","chapter":24,"verse":15}
-יעקב אבינו / יעקב / ישראל → {"book":"Genesis","chapter":25,"verse":19}
-לאה אמנו / לאה → {"book":"Genesis","chapter":29,"verse":16}
-רחל אמנו / רחל → {"book":"Genesis","chapter":29,"verse":16}
-לבן הארמי / לבן → {"book":"Genesis","chapter":29,"verse":1}
-עשו / אדום / עשיו → {"book":"Genesis","chapter":25,"verse":25}
-יוסף הצדיק / יוסף → {"book":"Genesis","chapter":37,"verse":1}
-בנימין → {"book":"Genesis","chapter":35,"verse":18}
-ראובן → {"book":"Genesis","chapter":29,"verse":32}
+// Entries list every common alias, honorific, misspelling, and gender form separated by " / "
+const CHARACTERS_MAP = `If only a character name or description is mentioned (no explicit book/chapter/verse), use these defaults:
+משה / מרע"ה / משה רבנו / הנביא / האיש שהוציא את ישראל → {"book":"Exodus","chapter":2,"verse":1}
+אברהם אבינו / אברהם / אברם / אבי האומה → {"book":"Genesis","chapter":12,"verse":1}
+שרה אמנו / שרה / שרי / אשת אברהם → {"book":"Genesis","chapter":12,"verse":5}
+הגר / שפחת שרה / אמת ישמעאל → {"book":"Genesis","chapter":16,"verse":1}
+ישמעאל / ישמעאל בן אברהם / בן הגר → {"book":"Genesis","chapter":16,"verse":11}
+יצחק אבינו / יצחק / בן אברהם → {"book":"Genesis","chapter":21,"verse":1}
+רבקה / רבקה אמנו / אשת יצחק → {"book":"Genesis","chapter":24,"verse":15}
+יעקב אבינו / יעקב / ישראל / האיש שנאבק עם המלאך → {"book":"Genesis","chapter":25,"verse":19}
+לאה אמנו / לאה / הבת הגדולה של לבן → {"book":"Genesis","chapter":29,"verse":16}
+רחל אמנו / רחל / הבת הקטנה של לבן / האהובה → {"book":"Genesis","chapter":29,"verse":16}
+לבן הארמי / לבן / אחי רבקה / אבי רחל ולאה → {"book":"Genesis","chapter":29,"verse":1}
+עשו / אדום / עשיו / האח השעיר / בעל הבכורה → {"book":"Genesis","chapter":25,"verse":25}
+יוסף הצדיק / יוסף / בן יעקב ורחל / בן הזקנים / הנמכר → {"book":"Genesis","chapter":37,"verse":1}
+בנימין / בן ימין / בן האחרון → {"book":"Genesis","chapter":35,"verse":18}
+ראובן / הבכור / בן לאה הבכור → {"book":"Genesis","chapter":29,"verse":32}
 שמעון → {"book":"Genesis","chapter":29,"verse":33}
-לוי → {"book":"Genesis","chapter":29,"verse":34}
-יהודה → {"book":"Genesis","chapter":29,"verse":35}
+לוי / שבט הכהנים → {"book":"Genesis","chapter":29,"verse":34}
+יהודה / אבי שבט יהודה → {"book":"Genesis","chapter":29,"verse":35}
 דן → {"book":"Genesis","chapter":30,"verse":6}
 נפתלי → {"book":"Genesis","chapter":30,"verse":8}
 גד → {"book":"Genesis","chapter":30,"verse":11}
 אשר → {"book":"Genesis","chapter":30,"verse":13}
 יששכר → {"book":"Genesis","chapter":30,"verse":18}
 זבולון → {"book":"Genesis","chapter":30,"verse":20}
-דינה → {"book":"Genesis","chapter":30,"verse":21}
-תמר → {"book":"Genesis","chapter":38,"verse":6}
-יהודה ותמר → {"book":"Genesis","chapter":38,"verse":1}
-אסנת → {"book":"Genesis","chapter":41,"verse":45}
-פוטיפר → {"book":"Genesis","chapter":37,"verse":36}
+דינה / דינה בת יעקב / הבת שנאנסה → {"book":"Genesis","chapter":30,"verse":21}
+שכם / שכם בן חמור / שאנס את דינה → {"book":"Genesis","chapter":34,"verse":2}
+חמור / חמור אבי שכם → {"book":"Genesis","chapter":34,"verse":2}
+ער / ער בן יהודה → {"book":"Genesis","chapter":38,"verse":3}
+אונן / אונן בן יהודה → {"book":"Genesis","chapter":38,"verse":4}
+תמר / תמר כלת יהודה / תמר שהתחפשה → {"book":"Genesis","chapter":38,"verse":6}
+אסנת / אשת יוסף → {"book":"Genesis","chapter":41,"verse":45}
+מנשה / מנשה בן יוסף → {"book":"Genesis","chapter":41,"verse":51}
+אפרים / אפרים בן יוסף → {"book":"Genesis","chapter":41,"verse":52}
+פוטיפר / שר הטבחים → {"book":"Genesis","chapter":37,"verse":36}
+אשת פוטיפר / האשה שפיתתה את יוסף → {"book":"Genesis","chapter":39,"verse":7}
+לוט / לוט בן הרן / אחיין אברהם → {"book":"Genesis","chapter":12,"verse":4}
 נח → {"book":"Genesis","chapter":6,"verse":9}
-שם חם ויפת / בני נח → {"book":"Genesis","chapter":9,"verse":18}
+שם / שם בן נח → {"book":"Genesis","chapter":9,"verse":18}
+חם / חם בן נח → {"book":"Genesis","chapter":9,"verse":18}
+יפת / יפת בן נח → {"book":"Genesis","chapter":9,"verse":18}
 אדם הראשון / אדם → {"book":"Genesis","chapter":2,"verse":7}
-חוה → {"book":"Genesis","chapter":2,"verse":20}
+חוה / אשת אדם / הראשונה → {"book":"Genesis","chapter":2,"verse":20}
 קין → {"book":"Genesis","chapter":4,"verse":1}
 הבל → {"book":"Genesis","chapter":4,"verse":1}
-בלעם → {"book":"Numbers","chapter":22,"verse":5}
-בלק → {"book":"Numbers","chapter":22,"verse":2}
-פינחס → {"book":"Numbers","chapter":25,"verse":7}
-קורח → {"book":"Numbers","chapter":16,"verse":1}
-אהרן הכהן / אהרן → {"book":"Exodus","chapter":4,"verse":14}
-מרים הנביאה / מרים → {"book":"Exodus","chapter":15,"verse":20}
-יהושע בן נון / יהושע → {"book":"Joshua","chapter":1,"verse":1}
+ציפורה / צפורה / אשת משה / בת יתרו → {"book":"Exodus","chapter":2,"verse":21}
+יתרו / יתרו חותן משה / רעואל / חובב → {"book":"Exodus","chapter":2,"verse":18}
+בלעם / בלעם בן בעור / הנביא שקילל → {"book":"Numbers","chapter":22,"verse":5}
+בלק / בלק מלך מואב → {"book":"Numbers","chapter":22,"verse":2}
+פינחס / פינחס בן אלעזר / שקינא לה' → {"book":"Numbers","chapter":25,"verse":7}
+זמרי / זמרי בן סלוא → {"book":"Numbers","chapter":25,"verse":14}
+קורח / קורח בן יצהר / שמרד במשה → {"book":"Numbers","chapter":16,"verse":1}
+דתן ואבירם → {"book":"Numbers","chapter":16,"verse":1}
+נדב ואביהו / בני אהרן שמתו / שהביאו אש זרה → {"book":"Leviticus","chapter":10,"verse":1}
+אלעזר / אלעזר בן אהרן → {"book":"Numbers","chapter":3,"verse":2}
 כלב / כלב בן יפונה → {"book":"Numbers","chapter":13,"verse":6}
-דבורה הנביאה / דבורה → {"book":"Judges","chapter":4,"verse":1}
-יעל → {"book":"Judges","chapter":4,"verse":17}
-סיסרא → {"book":"Judges","chapter":4,"verse":2}
-גדעון → {"book":"Judges","chapter":6,"verse":1}
-יפתח → {"book":"Judges","chapter":11,"verse":1}
-שמשון → {"book":"Judges","chapter":13,"verse":1}
-דלילה → {"book":"Judges","chapter":16,"verse":4}
+אהרן הכהן / אהרן / הכהן הגדול הראשון → {"book":"Exodus","chapter":4,"verse":14}
+מרים הנביאה / מרים / אחות משה → {"book":"Exodus","chapter":15,"verse":20}
+יהושע בן נון / יהושע → {"book":"Joshua","chapter":1,"verse":1}
+עכן / עכן בן כרמי / שגנב מהחרם → {"book":"Joshua","chapter":7,"verse":1}
+רחב / רחב הזונה / האשה שהחביאה את המרגלים / מי שתלתה החוט האדום → {"book":"Joshua","chapter":2,"verse":1}
+דבורה הנביאה / דבורה / הנביאה שופטת → {"book":"Judges","chapter":4,"verse":1}
+יעל / יעל אשת חבר / האשה שהרגה את סיסרא / שתקעה יתד / מי שהרגה בשינה → {"book":"Judges","chapter":4,"verse":17}
+סיסרא / שר צבא כנען → {"book":"Judges","chapter":4,"verse":2}
+ברק / ברק בן אבינועם → {"book":"Judges","chapter":4,"verse":6}
+גדעון / ירובעל / שניצח את מדיין → {"book":"Judges","chapter":6,"verse":1}
+יפתח / שנדר נדר / בת יפתח → {"book":"Judges","chapter":11,"verse":1}
+שמשון / שמשון הגיבור / הנזיר החזק → {"book":"Judges","chapter":13,"verse":1}
+דלילה / מי שגזזה את שמשון / שאנשי פלשת שכרו → {"book":"Judges","chapter":16,"verse":4}
 עלי הכהן / עלי → {"book":"I Samuel","chapter":1,"verse":9}
 שמואל הנביא / שמואל → {"book":"I Samuel","chapter":1,"verse":1}
-חנה אם שמואל / חנה → {"book":"I Samuel","chapter":1,"verse":1}
-שאול המלך / שאול → {"book":"I Samuel","chapter":9,"verse":1}
-יהונתן / יהונתן בן שאול → {"book":"I Samuel","chapter":14,"verse":1}
-דוד המלך / דוד / דוד בן ישי → {"book":"I Samuel","chapter":16,"verse":1}
-גוליית → {"book":"I Samuel","chapter":17,"verse":4}
-אביגיל → {"book":"I Samuel","chapter":25,"verse":3}
-בת שבע → {"book":"II Samuel","chapter":11,"verse":3}
-אוריה החיתי / אוריה → {"book":"II Samuel","chapter":11,"verse":3}
-אבשלום → {"book":"II Samuel","chapter":13,"verse":1}
-אמנון → {"book":"II Samuel","chapter":13,"verse":1}
-יואב → {"book":"II Samuel","chapter":2,"verse":13}
-שלמה המלך / שלמה → {"book":"I Kings","chapter":3,"verse":5}
-ירבעם → {"book":"I Kings","chapter":11,"verse":26}
-אחאב → {"book":"I Kings","chapter":16,"verse":29}
-איזבל → {"book":"I Kings","chapter":16,"verse":31}
-אליהו הנביא / אליהו / אליהו התשבי → {"book":"I Kings","chapter":17,"verse":1}
-אלישע הנביא / אלישע → {"book":"I Kings","chapter":19,"verse":19}
-חזקיהו המלך / חזקיהו → {"book":"II Kings","chapter":18,"verse":1}
-יאשיהו המלך / יאשיהו → {"book":"II Kings","chapter":22,"verse":1}
+חנה אם שמואל / חנה / שהתפללה לילד → {"book":"I Samuel","chapter":1,"verse":1}
+שאול המלך / שאול / המלך הראשון → {"book":"I Samuel","chapter":9,"verse":1}
+יהונתן / יהונתן בן שאול / ידיד דוד → {"book":"I Samuel","chapter":14,"verse":1}
+דוד המלך / דוד / דוד בן ישי / רועה הצאן שנמשח → {"book":"I Samuel","chapter":16,"verse":1}
+גוליית / גלית / גלית הפלישתי / הענק → {"book":"I Samuel","chapter":17,"verse":4}
+נבל / נבל הכרמלי → {"book":"I Samuel","chapter":25,"verse":3}
+אביגיל / אביגיל אשת נבל / שהביאה מנחה → {"book":"I Samuel","chapter":25,"verse":3}
+אגג / אגג מלך עמלק → {"book":"I Samuel","chapter":15,"verse":8}
+בת שבע / אשת אוריה / אמת שלמה → {"book":"II Samuel","chapter":11,"verse":3}
+אוריה החיתי / אוריה / שדוד שלח למות → {"book":"II Samuel","chapter":11,"verse":3}
+אבשלום / בן דוד שמרד / בעל השיער הארוך → {"book":"II Samuel","chapter":13,"verse":1}
+אמנון / אמנון בן דוד → {"book":"II Samuel","chapter":13,"verse":1}
+תמר בת דוד / תמר אחות אבשלום → {"book":"II Samuel","chapter":13,"verse":1}
+מפיבשת / מפיבושת / בן יהונתן / פצוע הרגליים → {"book":"II Samuel","chapter":4,"verse":4}
+יואב / יואב בן צרויה / שר הצבא → {"book":"II Samuel","chapter":2,"verse":13}
+נתן הנביא / נתן / שגילה לדוד חטאו → {"book":"II Samuel","chapter":7,"verse":2}
+אחיתופל / אחיתופל הגילוני / היועץ → {"book":"II Samuel","chapter":15,"verse":12}
+שמעי / שמעי בן גרא / שקילל את דוד → {"book":"II Samuel","chapter":16,"verse":5}
+שלמה המלך / שלמה / ידידיה / החכם מכל האדם → {"book":"I Kings","chapter":3,"verse":5}
+מלכת שבא / מלכה מלכת שבא / שבאה לשמוע חכמת שלמה → {"book":"I Kings","chapter":10,"verse":1}
+רחבעם / רחבעם בן שלמה / שקרע את הממלכה → {"book":"I Kings","chapter":12,"verse":1}
+ירבעם / ירבעם בן נבט / שהעמיד עגלים → {"book":"I Kings","chapter":11,"verse":26}
+אחאב / אחאב מלך ישראל / שנשא את איזבל → {"book":"I Kings","chapter":16,"verse":29}
+איזבל / איזבל אשת אחאב / שרדפה את הנביאים → {"book":"I Kings","chapter":16,"verse":31}
+נבות / נבות היזרעאלי / שנרצח בגלל כרמו → {"book":"I Kings","chapter":21,"verse":1}
+אליהו הנביא / אליהו / אליהו התשבי / הנביא שעלה בסערה → {"book":"I Kings","chapter":17,"verse":1}
+אלישע הנביא / אלישע / תלמיד אליהו → {"book":"I Kings","chapter":19,"verse":19}
+נעמן / נעמן שר צבא ארם / נעמן המצורע / שהתרפא בירדן → {"book":"II Kings","chapter":5,"verse":1}
+גיחזי / גחזי / משרת אלישע / שלקח שכר → {"book":"II Kings","chapter":5,"verse":20}
+עתליה / אתליה המלכה / שהמליכה עצמה → {"book":"II Kings","chapter":11,"verse":1}
+יהוידע / יהוידע הכהן / שהסתיר את יואש → {"book":"II Kings","chapter":11,"verse":4}
+חזקיהו המלך / חזקיהו / שסנחריב צר עליו → {"book":"II Kings","chapter":18,"verse":1}
+חולדה הנביאה / חולדה → {"book":"II Kings","chapter":22,"verse":14}
+יאשיהו המלך / יאשיהו / שמצא את ספר התורה → {"book":"II Kings","chapter":22,"verse":1}
+נבוכדנצר / נבוכדראצר / מלך בבל שחרב את המקדש → {"book":"II Kings","chapter":25,"verse":1}
 ישעיהו הנביא / ישעיהו / ישעיה → {"book":"Isaiah","chapter":1,"verse":1}
-ירמיהו הנביא / ירמיה / ירמיהו → {"book":"Jeremiah","chapter":1,"verse":1}
-יחזקאל הנביא / יחזקאל → {"book":"Ezekiel","chapter":1,"verse":1}
+ירמיהו הנביא / ירמיה / ירמיהו / נביא החורבן → {"book":"Jeremiah","chapter":1,"verse":1}
+יחזקאל הנביא / יחזקאל / שראה מרכבה → {"book":"Ezekiel","chapter":1,"verse":1}
 הושע הנביא / הושע → {"book":"Hosea","chapter":1,"verse":1}
-עמוס הנביא / עמוס → {"book":"Amos","chapter":1,"verse":1}
-יונה הנביא / יונה → {"book":"Jonah","chapter":1,"verse":1}
+עמוס הנביא / עמוס / רועה התקוע → {"book":"Amos","chapter":1,"verse":1}
+יונה הנביא / יונה / שבלע אותו הדג → {"book":"Jonah","chapter":1,"verse":1}
 מיכה הנביא / מיכה → {"book":"Micah","chapter":1,"verse":1}
 נחום הנביא / נחום → {"book":"Nahum","chapter":1,"verse":1}
 חבקוק הנביא / חבקוק → {"book":"Habakkuk","chapter":1,"verse":1}
 מלאכי הנביא / מלאכי → {"book":"Malachi","chapter":1,"verse":1}
-דניאל → {"book":"Daniel","chapter":1,"verse":1}
-חנניה מישאל ועזריה / שדרך מישך ועבד נגו → {"book":"Daniel","chapter":1,"verse":6}
-אסתר המלכה / אסתר / הדסה → {"book":"Esther","chapter":2,"verse":7}
-מרדכי → {"book":"Esther","chapter":2,"verse":5}
-המן / המן האגגי → {"book":"Esther","chapter":3,"verse":1}
-אחשורוש → {"book":"Esther","chapter":1,"verse":1}
-ושתי → {"book":"Esther","chapter":1,"verse":9}
-רות / רות המואביה → {"book":"Ruth","chapter":1,"verse":1}
+דניאל / דניאל בגוב האריות → {"book":"Daniel","chapter":1,"verse":1}
+חנניה מישאל ועזריה / שדרך מישך ועבד נגו / שלושת החברים בכבשן → {"book":"Daniel","chapter":1,"verse":6}
+אסתר המלכה / אסתר / הדסה / הגיבורה של פורים → {"book":"Esther","chapter":2,"verse":7}
+מרדכי / מרדכי היהודי → {"book":"Esther","chapter":2,"verse":5}
+המן / המן האגגי / שרצה להשמיד את היהודים → {"book":"Esther","chapter":3,"verse":1}
+אחשורוש / מלך פרס → {"book":"Esther","chapter":1,"verse":1}
+ושתי / המלכה שסירבה → {"book":"Esther","chapter":1,"verse":9}
+רות / רות המואביה / שנאמנה לנעמי → {"book":"Ruth","chapter":1,"verse":1}
 נעמי → {"book":"Ruth","chapter":1,"verse":2}
-בועז → {"book":"Ruth","chapter":2,"verse":1}
-עזרא → {"book":"Ezra","chapter":1,"verse":1}
-נחמיה → {"book":"Nehemiah","chapter":1,"verse":1}
-איוב → {"book":"Job","chapter":1,"verse":1}`;
+בועז / הגואל / הצדיק מבית לחם → {"book":"Ruth","chapter":2,"verse":1}
+כורש / כורש מלך פרס / שהרשה לבנות את המקדש → {"book":"Ezra","chapter":1,"verse":1}
+זרובבל / זרובבל בן שאלתיאל → {"book":"Ezra","chapter":2,"verse":2}
+עזרא הסופר / עזרא → {"book":"Ezra","chapter":1,"verse":1}
+נחמיה / נחמיה בן חכליה / שבנה את חומות ירושלים → {"book":"Nehemiah","chapter":1,"verse":1}
+איוב / שסבל הרבה → {"book":"Job","chapter":1,"verse":1}`;
+
+// ── Slang / colloquial / informal descriptions of biblical events ──────────────
+// Covers everyday speech, slangy paraphrases, and descriptions without official names
+const SLANG_MAP = `Informal / colloquial / descriptive phrasings — map to the same locations:
+הקטע שרוקדים סביב העגל / כשעם ישראל רקד סביב עגל זהב → {"book":"Exodus","chapter":32,"verse":1}
+כשמשה שבר את הלוחות / הלוחות שנשברו → {"book":"Exodus","chapter":32,"verse":19}
+כשמשה הכה בסלע / הסלע שממנו יצא מים / טעות משה → {"book":"Numbers","chapter":20,"verse":1}
+כשהאדמה בלעה את קורח / שהאדמה נפתחה / שרד המאוד → {"book":"Numbers","chapter":16,"verse":31}
+כשנפתחה האדמה / האדמה נבקעה → {"book":"Numbers","chapter":16,"verse":31}
+הדג שבלע את יונה / הדג הגדול / האיש בבטן הדג → {"book":"Jonah","chapter":1,"verse":17}
+כשיוסף בכה / יוסף נגלה לאחיו / הפגישה הגדולה של יוסף → {"book":"Genesis","chapter":45,"verse":1}
+כשיוסף ברח מאשת פוטיפר / הכותונת שנשאר ביד / שנשאר ערום → {"book":"Genesis","chapter":39,"verse":12}
+החלום עם הסולם / הסולם שמגיע לשמים / מלאכים עולים ויורדים → {"book":"Genesis","chapter":28,"verse":12}
+החלום עם השמש והירח / חלום יוסף הגדול / שאחיו ישתחוו → {"book":"Genesis","chapter":37,"verse":9}
+פרות שמנות ופרות רזות / שבע שנות שובע ורעב / חלום פרעה → {"book":"Genesis","chapter":41,"verse":1}
+כשעשו מכר את הבכורה / נזיד עדשים / מה הבכורה שווה לי → {"book":"Genesis","chapter":25,"verse":29}
+כשיעקב לבש את עורות הגדיים / יצחק יצחק את יעקב לגבינה עשו → {"book":"Genesis","chapter":27,"verse":16}
+כשאבן הבאר הוגלגלה / יעקב הגליל את האבן / יעקב פגש את רחל בבאר → {"book":"Genesis","chapter":29,"verse":10}
+שבע שנים על שבע שנים / יעקב עבד ארבע עשרה שנה בשביל רחל → {"book":"Genesis","chapter":29,"verse":20}
+כשיוסף קיבל את הכותנת / כתונת פסים / בגד הצבעים → {"book":"Genesis","chapter":37,"verse":3}
+האיש שישן על האבן / יעקב לן בשדה → {"book":"Genesis","chapter":28,"verse":11}
+המאבק בלילה / כשיעקב נאבק עם האיש / ירך יעקב → {"book":"Genesis","chapter":32,"verse":25}
+כשנח נכנס לתיבה / נח ובני ביתו בתיבה / חיות בתיבה → {"book":"Genesis","chapter":7,"verse":7}
+כשאדם וחוה אכלו מהעץ / עץ הדעת / הנחש שפיתה → {"book":"Genesis","chapter":3,"verse":6}
+כשקין הרג את הבל / הרצח הראשון → {"book":"Genesis","chapter":4,"verse":8}
+כשנולד משה בסל / תיבת הגומא / הילד שהושלך ליאור → {"book":"Exodus","chapter":2,"verse":3}
+בת פרעה מצאה את משה / כשמשה נמצא בנהר → {"book":"Exodus","chapter":2,"verse":5}
+כשמשה הרג את המצרי / משה מכה את המצרי → {"book":"Exodus","chapter":2,"verse":12}
+כשמשה ראה את הסנה / הסנה שבוער ואינו כלה → {"book":"Exodus","chapter":3,"verse":2}
+כשקרעו את הים / הים שנפתח / מצרים טבעו → {"book":"Exodus","chapter":14,"verse":21}
+ריקוד מרים / מרים עם תופים / שירת הנשים → {"book":"Exodus","chapter":15,"verse":20}
+כשהתורה ניתנה / הר סיני עם ענן ורעם / קולות וברקים → {"book":"Exodus","chapter":19,"verse":16}
+כשמשה עלה להר / ארבעים יום בהר → {"book":"Exodus","chapter":19,"verse":20}
+כשהמרגלים חזרו עם ענבים גדולים / ענבי אשכול → {"book":"Numbers","chapter":13,"verse":23}
+כשבלעם ואתונו דיברו / החמור שדיבר / אתון בלעם → {"book":"Numbers","chapter":22,"verse":28}
+הנחש הנחושת שהרפא / נחש על עמוד / שנחשכו ומתו → {"book":"Numbers","chapter":21,"verse":9}
+חומות יריחו נפלו / תרועת החצוצרות / שבעה ימים סביב העיר → {"book":"Joshua","chapter":6,"verse":20}
+כשהשמש עצרה / יום שהיה ארוך / יהושע ואמר לשמש → {"book":"Joshua","chapter":10,"verse":12}
+מי שתקעה יתד בראש / יעל ומסמר / שהרגה את הגנרל → {"book":"Judges","chapter":4,"verse":21}
+כשגיזזו את שמשון / שמשון ישן ודלילה גיזזה → {"book":"Judges","chapter":16,"verse":19}
+כשהעמודים נפלו / שמשון הפיל את הבניין / מות שמשון → {"book":"Judges","chapter":16,"verse":30}
+כשחנה התפללה בבכי / חנה מתפללת בלב / שמואל אמר דיבר → {"book":"I Samuel","chapter":1,"verse":10}
+כשדוד ניצח את הגיבור הגדול / אבן מהקלע / ילד נגד ענק → {"book":"I Samuel","chapter":17,"verse":49}
+שני הנשים עם התינוק / משפט שלמה / מי האם האמיתית → {"book":"I Kings","chapter":3,"verse":16}
+תחרות הנביאים על הכרמל / אליהו נגד נביאי הבעל / אש ירדה מהשמים → {"book":"I Kings","chapter":18,"verse":38}
+אליהו עולה לשמים / הרכב האש / אלישע קרע בגדיו → {"book":"II Kings","chapter":2,"verse":11}
+כשהעצמות קמו לחיים / בקעת העצמות היבשות / עצמות נתחברו → {"book":"Ezekiel","chapter":37,"verse":7}
+כבשן האש שלא שרף / שלושה בתוך האש / ארבעה רואים → {"book":"Daniel","chapter":3,"verse":25}
+האריות שלא אכלו את דניאל / גוב האריות / לילה בין האריות → {"book":"Daniel","chapter":6,"verse":22}
+כשאסתר נכנסה למלך ללא רשות / חיי הגיבורה / אם אבדתי אבדתי → {"book":"Esther","chapter":4,"verse":16}
+כשהמן נתלה על העץ שהכין / מידה כנגד מידה → {"book":"Esther","chapter":7,"verse":10}
+כשרות הלכה אחרי נעמי / לאן שתלכי אלך → {"book":"Ruth","chapter":1,"verse":16}`;
 
 // ── Biblical topics/events map ─────────────────────────────────────────────────
 const TOPICS_MAP = `If a well-known biblical event, topic, or family/relational context is mentioned (no explicit book/chapter), use these:
@@ -241,6 +332,8 @@ Hebrew gematria numbers: א=1 ב=2 ג=3 ד=4 ה=5 ו=6 ז=7 ח=8 ט=9 י=10 יא
 ${CHARACTERS_MAP}
 
 ${TOPICS_MAP}
+
+${SLANG_MAP}
 
 Return exactly one of:
 {"found":true,"book":"<English name>","chapter":<number>,"verse":<number>}
