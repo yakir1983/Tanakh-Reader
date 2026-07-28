@@ -187,7 +187,7 @@ const SLANG_MAP = `Informal / colloquial / descriptive phrasings — map to the 
 כשמשה הכה בסלע / הסלע שממנו יצא מים / טעות משה → {"book":"Numbers","chapter":20,"verse":1}
 כשהאדמה בלעה את קורח / שהאדמה נפתחה / שרד המאוד → {"book":"Numbers","chapter":16,"verse":31}
 כשנפתחה האדמה / האדמה נבקעה → {"book":"Numbers","chapter":16,"verse":31}
-הדג שבלע את יונה / הדג הגדול / האיש בבטן הדג → {"book":"Jonah","chapter":1,"verse":17}
+הדג שבלע את יונה / הדג הגדול / האיש בבטן הדג → {"book":"Jonah","chapter":2,"verse":1}
 כשיוסף בכה / יוסף נגלה לאחיו / הפגישה הגדולה של יוסף → {"book":"Genesis","chapter":45,"verse":1}
 כשיוסף ברח מאשת פוטיפר / הכותונת שנשאר ביד / שנשאר ערום → {"book":"Genesis","chapter":39,"verse":12}
 החלום עם הסולם / הסולם שמגיע לשמים / מלאכים עולים ויורדים → {"book":"Genesis","chapter":28,"verse":12}
@@ -316,7 +316,7 @@ const TOPICS_MAP = `If a well-known biblical event, topic, or family/relational 
 חזון ישעיה / שרפים → {"book":"Isaiah","chapter":6,"verse":1}
 חזון יחזקאל / מרכבה → {"book":"Ezekiel","chapter":1,"verse":1}
 עצמות היבשות / בקעת העצמות → {"book":"Ezekiel","chapter":37,"verse":1}
-יונה בבטן הדג / יונה והדג → {"book":"Jonah","chapter":1,"verse":17}
+יונה בבטן הדג / יונה והדג → {"book":"Jonah","chapter":2,"verse":1}
 כבשן האש / שדרך מישך ועבד נגו → {"book":"Daniel","chapter":3,"verse":1}
 דניאל בגוב האריות → {"book":"Daniel","chapter":6,"verse":17}
 מגילת אסתר / פורים / המן → {"book":"Esther","chapter":1,"verse":1}
