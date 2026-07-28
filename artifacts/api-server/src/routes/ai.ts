@@ -335,6 +335,53 @@ ${TOPICS_MAP}
 
 ${SLANG_MAP}
 
+── NLP sentence parsing — for full sentences, descriptions, or quotes ──────────
+When the input is a complete sentence, a biblical quotation, or a multi-word
+description of an event (rather than a simple keyword or name), apply this
+3-step process to find the most precise verse:
+
+STEP 1 — זהה דמויות מרכזיות (Identify characters):
+  Extract every character name, role, title, or contextual pronoun in the input.
+  "האתון שפצתה את פיה"      → characters: אתון (של בלעם)
+  "משה ירד מההר"            → character: משה
+  "רד לעם כי שחת"           → implied: ה' מדבר עם משה, העם חטא
+
+STEP 2 — זהה פעולה/אירוע מרכזי (Identify the central action or event):
+  Extract the main verb and what took place.
+  "האתון שפצתה את פיה"      → action: פצתה פיה / דיברה
+  "משה ירד מההר"            → action: ירד מהר סיני
+  "רד לעם כי שחת"           → action: שחת העם (חטא העגל)
+
+STEP 3 — מצא את הפסוק המדויק (Find the precise verse):
+  Cross-reference character + action using the maps above AND your biblical
+  knowledge. Prefer the verse that contains the action itself, not merely a
+  nearby context verse.
+
+Sentence / quote → verse mapping examples:
+"האתון שפצתה את פיה"              → Numbers 22:28
+"ויפתח ה' את פי האתון"            → Numbers 22:28
+"משה ירד מההר"                    → Exodus 32:15
+"משה ירד עם הלוחות"               → Exodus 32:15
+"רד לעם כי שחת"                   → Exodus 32:7
+"ויגע בכף ירכו"                   → Genesis 32:26
+"ותפתח ותראהו את הילד בוכה"       → Exodus 2:6
+"ולקחה מפריו ותאכל"               → Genesis 3:6
+"וינס ויצא החוצה"                 → Genesis 39:12
+"שמע ישראל ה' אלהינו ה' אחד"     → Deuteronomy 6:4
+"ויקרא שמו יעקב"                  → Genesis 25:26
+"ותלד ותקרא שמו יוסף"             → Genesis 30:24
+"ויתפשהו בבגדו לאמר שכבה עמי"    → Genesis 39:12
+"ויאמר אם אבדתי אבדתי"            → Esther 4:16
+"לאן תלכי אלך ובאשר תלוני אלין"  → Ruth 1:16
+"ויקח דוד את האבן ויקלע"          → I Samuel 17:49
+"ויהי בצאת נפשה כי מתה"          → Genesis 35:18
+"ויסגר ה' בעדו"                   → Genesis 7:16
+"ויעמד השמש בחצי השמים"           → Joshua 10:13
+"ויקח פינחס את הרמח"              → Numbers 25:7
+"ויפל על צוארי בנימין אחיו"       → Genesis 45:14
+"ואתה תצוה את בני ישראל"          → Exodus 27:20
+"כי שאלתיו מה' "                  → I Samuel 1:20
+
 Return exactly one of:
 {"found":true,"book":"<English name>","chapter":<number>,"verse":<number>}
 {"found":false}
@@ -344,12 +391,13 @@ Rules:
 - If a character name or alias matches (including honorifics like "אבינו", "אמנו", "המלך", "הנביא", "הצדיק") → use character defaults.
 - If a relational phrase is used ("אביו של יוסף" → יעקב, "בנות לבן" → לאה ורחל → Genesis 29, "אחי יוסף" → Genesis 37, "בעלה של רחל" → יעקב → Genesis 29) → resolve to the relevant character or event.
 - If a topic/event name matches → use topic defaults.
+- If the input is a full sentence or biblical quote → apply the 3-step NLP process above.
 - If only chapter/verse without book → use book "CURRENT".
 - Default chapter=1, verse=1 if not mentioned.
 - If the input is a place name associated with a biblical event (e.g. "חרן", "באר שבע", "בית לחם") → navigate to the most significant event at that place.
 - If nothing in the input maps to a Bible reference → {"found":false}.
 
-Examples:
+Keyword / name examples:
 "תהילים פרק כב פסוק א" → {"found":true,"book":"Psalms","chapter":22,"verse":1}
 "המבול" → {"found":true,"book":"Genesis","chapter":6,"verse":9}
 "קריעת ים סוף" → {"found":true,"book":"Exodus","chapter":14,"verse":21}
@@ -489,8 +537,8 @@ router.post("/ai/voice-command", async (req, res) => {
     } else {
       // ── Navigate ─────────────────────────────────────────────────────────────
       const completion = await openai.chat.completions.create({
-        model: "gpt-5-mini",
-        max_completion_tokens: 512,
+        model: "gpt-5.6-terra",
+        max_completion_tokens: 120,
         messages: [
           { role: "system", content: NAV_PROMPT },
           { role: "user",   content: transcript },
