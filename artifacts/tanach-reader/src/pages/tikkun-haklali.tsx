@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, ChevronDown, ChevronUp, Moon, Sun } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { getChapterVerses } from '@/lib/sefaria-api';
 import { fetchPsalmExplanation } from '@/lib/ai-api';
 import { AramaicTranslation } from '@/components/aramaic-translation';
 import { toHebrewNumeral } from '@/lib/hebrew-numerals';
-import { storageGet, storageSet } from '@/lib/safe-storage';
+import { storageGet, storageSet, storageGetBool } from '@/lib/safe-storage';
 
 // ── Font-size constants — identical to the Tanach reader ──────────────────
 const FONT_SIZE_MIN     = 2.5;
@@ -158,6 +158,17 @@ export default function TikkunHaklali() {
   const [idx, setIdx] = useState(0);
   const [, navigate]  = useLocation();
 
+  // ── Dark mode — shared key with home.tsx so preference is remembered ──────
+  const [isDark, setIsDark] = useState(() => {
+    const saved = storageGetBool('tanach_dark', false);
+    document.documentElement.classList.toggle('dark', saved);
+    return saved;
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    storageSet('tanach_dark', String(isDark));
+  }, [isDark]);
+
   // ── Shared font size for ALL text (psalms, prayers, explanation) ─────────
   // Identical mechanism to the Tanach reader; persisted to localStorage.
   const [fontSize, setFontSize] = useState<number>(() => {
@@ -201,6 +212,16 @@ export default function TikkunHaklali() {
 
   return (
     <div className="min-h-[100dvh] w-full bg-background text-foreground">
+
+      {/* ── כפתור יום/לילה — פינה שמאלית עליונה ───────────────────── */}
+      <button
+        onClick={() => setIsDark(d => !d)}
+        className={`fixed top-3 left-4 z-50 ${ctrlBtn()}`}
+        aria-label={isDark ? 'עבור למצב יום' : 'עבור למצב לילה'}
+      >
+        {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        <span dir="rtl">{isDark ? 'יום' : 'לילה'}</span>
+      </button>
 
       {/* ── בס"ד — פינה ימנית עליונה ────────────────────────────────── */}
       <span
