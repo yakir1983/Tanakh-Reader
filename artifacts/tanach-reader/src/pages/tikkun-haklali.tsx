@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { getChapterVerses } from '@/lib/sefaria-api';
 import { fetchPsalmExplanation } from '@/lib/ai-api';
@@ -21,6 +21,85 @@ const TIKKUN_PSALMS = [
   { num: 150, heb: 'ק״נ'  },
 ] as const;
 
+// ── תפילות פתיחה ─────────────────────────────────────────────────────────
+const OPENING_PARAGRAPHS = [
+  `לְשֵׁם יִחוּד קֻדְשָׁא בְּרִיךְ הוּא וּשְׁכִינְתֵּהּ, בִּדְחִילוּ וּרְחִימוּ וּרְחִימוּ וּדְחִילוּ, לְיַחֵד שֵׁם י״ה בְּו״ה בְּיִחוּדָא שְׁלִים, בְּשֵׁם כָּל יִשְׂרָאֵל.`,
+
+  `הֲרֵינִי מְקַשֵּׁר עַצְמִי בְּאֲמִירַת הָעֲשָׂרָה מִזְמוֹרִים אֵלּוּ לְכָל הַצַּדִּיקִים הָאֲמִתִּיִּים שֶׁבְּדוֹרֵנוּ, וּבִפְרַט לְרַבֵּנוּ הַקָּדוֹשׁ כְּבוֹד קְדֻשַּׁת מוֹהֲרַנָּ״א, רַבִּי נַחְמָן בֶּן שִׂמְחָה בֶּן פֵּיגָה מִבְּרֶסְלֶב, נְשָׁמָתוֹ בְּגַן עֵדֶן, זְכוּתוֹ יָגֵן עָלֵינוּ. אָמֵן.`,
+
+  `הֲרֵינִי מוּכָן וּמְזוּמָּן לִקְרֹא הָעֲשָׂרָה מִזְמוֹרֵי תְּהִלִּים שֶׁהֵם תִּקּוּן כְּלָלִי לְתַקֵּן כָּל הַפְּגָמִים, כְּפִי שֶׁנִּתְגַּלָּה לָנוּ עַל יְדֵי רַבֵּנוּ הַקָּדוֹשׁ מוֹהֲרַנָּ״א. וִיהִי רָצוֹן מִלְּפָנֶיךָ יְהֹוָה אֱלֹהֵינוּ וֵאלֹהֵי אֲבוֹתֵינוּ, שֶׁיְּהֵא נֶחְשָׁב לְפָנֶיךָ כְּאִלּוּ תִּקַּנְּנוּ כָּל הַפְּגָמִים. וְתַצִּילֵנוּ מִכָּל פְּגָמִים שֶׁל הַמַּחֲשָׁבוֹת, הַדִּבּוּרִים וְהַמַּעֲשִׂים, מֵעֵת הִוָּלְדֵנוּ עַד הַיּוֹם הַזֶּה. אָמֵן סֶלָה.`,
+];
+
+// ── תפילות סיום ──────────────────────────────────────────────────────────
+const CLOSING_PARAGRAPHS = [
+  `מִי יִתֵּן מִצִּיּוֹן יְשׁוּעַת יִשְׂרָאֵל, בְּשׁוּב יְהֹוָה שְׁבוּת עַמּוֹ, יָגֵל יַעֲקֹב יִשְׂמַח יִשְׂרָאֵל.`,
+
+  `רִבּוֹנוֹ שֶׁל עוֹלָם, עִלַּת הָעִלּוֹת וְסִבַּת כָּל הַסִּבּוֹת. הִנֵּה אֵין בִּי כֹּחַ לְתַקֵּן אֶת אֲשֶׁר קִלְקַלְתִּי, כִּי אֵין בִּי מַעֲשִׂים טוֹבִים. אַךְ אַתָּה בְּרַחֲמֶיךָ הָרַבִּים גִּלֵּיתָ לָנוּ עַל יְדֵי עַבְדְּךָ רַבֵּנוּ הַקָּדוֹשׁ כְּבוֹד קְדֻשַּׁת מוֹהֲרַנָּ״א, כִּי עֲשָׂרָה מִזְמוֹרִים אֵלּוּ הֵם תִּקּוּן גָּדוֹל וּכְלָלִי לְכָל הַפְּגָמִים.`,
+
+  `לָכֵן, אֲנַחְנוּ בָּאִים לְפָנֶיךָ בְּתַחֲנוּנִים, וּמְבַקְּשִׁים מִמְּךָ בְּשֵׁם זְכוּת רַבֵּנוּ הַקָּדוֹשׁ, שֶׁתְּקַבֵּל בְּרַחֲמִים רַבִּים אֶת אֲמִירַת הָעֲשָׂרָה מִזְמוֹרִים שֶׁאָמַרְנוּ, וְיַעֲמֹד לָנוּ זְכוּת קְרִיאָתָם לְכַפֵּר וּלְמַחֵל עַל כָּל חַטֹּאתֵינוּ, עֲוֹנוֹתֵינוּ וּפְשָׁעֵינוּ. וּתְמַהֵר לְגָאֳלֵנוּ גְּאֻלָּה שְׁלֵמָה בִּמְהֵרָה בְּיָמֵינוּ. אָמֵן כֵּן יְהִי רָצוֹן.`,
+];
+
+// ── PrayerSection component ───────────────────────────────────────────────
+function PrayerSection({
+  title,
+  paragraphs,
+  defaultOpen = true,
+}: {
+  title: string;
+  paragraphs: string[];
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div
+      className="rounded-2xl border overflow-hidden shadow-sm"
+      style={{
+        borderColor: 'hsl(var(--primary) / 0.25)',
+        background: 'linear-gradient(160deg, hsl(var(--primary)/0.04), hsl(var(--primary)/0.09))',
+      }}
+      dir="rtl"
+    >
+      {/* Title bar */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-primary/5 transition-colors"
+      >
+        <span
+          className="text-base font-bold text-primary"
+          style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+        >
+          {title}
+        </span>
+        {open
+          ? <ChevronUp   className="w-4 h-4 text-primary/60 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-primary/60 shrink-0" />}
+      </button>
+
+      {/* Collapsible body */}
+      {open && (
+        <div className="px-5 pb-5 space-y-4 border-t border-primary/10">
+          {paragraphs.map((p, i) => (
+            <p
+              key={i}
+              className="text-foreground leading-loose text-right"
+              style={{
+                fontFamily: 'Frank Ruhl Libre, serif',
+                fontSize: '1.15rem',
+                lineHeight: '2.1',
+                marginTop: i === 0 ? '1rem' : undefined,
+              }}
+            >
+              {p}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Nav button style ──────────────────────────────────────────────────────
 const NAV_BTN = [
   'flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-primary/40',
   'bg-card text-primary font-semibold transition-all',
@@ -28,13 +107,13 @@ const NAV_BTN = [
   'disabled:opacity-20 disabled:cursor-not-allowed active:scale-95',
 ].join(' ');
 
+// ── Main page ─────────────────────────────────────────────────────────────
 export default function TikkunHaklali() {
-  const [idx, setIdx]   = useState(0);
-  const [, navigate]    = useLocation();
+  const [idx, setIdx] = useState(0);
+  const [, navigate]  = useLocation();
 
   const psalm = TIKKUN_PSALMS[idx];
 
-  // ── Psalm text ────────────────────────────────────────────────────────────
   const { data: verses, isLoading: loadingVerses } = useQuery({
     queryKey:  ['psalm-verses', psalm.num],
     queryFn:   () => getChapterVerses('Psalms', psalm.num),
@@ -43,7 +122,6 @@ export default function TikkunHaklali() {
 
   const psalmText = verses?.join(' ') ?? '';
 
-  // ── AI explanation (במילים פשוטות) ───────────────────────────────────────
   const { data: explanation, isLoading: loadingExplanation } = useQuery({
     queryKey:  ['psalm-explanation', psalm.num],
     queryFn:   () => fetchPsalmExplanation(psalm.num, psalmText),
@@ -111,13 +189,18 @@ export default function TikkunHaklali() {
           </div>
         </header>
 
+        {/* ── תפילות פתיחה (מוצגות לפני המזמור הראשון) ──────────────── */}
+        {isFirst && (
+          <PrayerSection title="תפילה לפני אמירת התיקון הכללי" paragraphs={OPENING_PARAGRAPHS} />
+        )}
+
         {/* ── Psalm title ─────────────────────────────────────────────── */}
         <div className="text-center" dir="rtl">
           <h2
             className="text-xl font-bold text-primary/75"
             style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
           >
-            תהילים • פרק {psalm.heb} &nbsp;({idx + 1}/{TIKKUN_PSALMS.length})
+            תהילים • פרק {psalm.heb}&nbsp; ({idx + 1} / {TIKKUN_PSALMS.length})
           </h2>
         </div>
 
@@ -160,7 +243,17 @@ export default function TikkunHaklali() {
         />
 
         {/* ── Bottom navigation ───────────────────────────────────────── */}
-        <NavButtons className="pb-16" />
+        <NavButtons />
+
+        {/* ── תפילות סיום (מוצגות אחרי המזמור האחרון) ────────────────── */}
+        {isLast && (
+          <PrayerSection
+            title="תפילה לאחר אמירת התיקון הכללי"
+            paragraphs={CLOSING_PARAGRAPHS}
+          />
+        )}
+
+        <div className="pb-16" />
 
       </div>
     </div>
