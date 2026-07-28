@@ -11,6 +11,7 @@ import { fetchVerseTranslation, fetchVerseExplanation } from '@/lib/ai-api';
 import { isAramaicVerse } from '@/lib/aramaic-ranges';
 import { getBookByEnglish } from '@/lib/tanach-data';
 import { AramaicTranslation } from '@/components/aramaic-translation';
+import { storageGet, storageGetBool, storageGetInt, storageSet, storageRemove } from '@/lib/safe-storage';
 import type { TanachBook } from '@/lib/tanach-data';
 const FONT_SIZE_MIN     = 2.5;
 const FONT_SIZE_MAX     = 8;
@@ -18,11 +19,11 @@ const FONT_SIZE_STEP    = 0.5;
 const FONT_SIZE_DEFAULT = 5;
 
 export default function Home() {
-  const [book,      setBook]      = useState(() => localStorage.getItem('tanach_book')    ?? 'Genesis');
-  const [chapter,   setChapter]   = useState(() => Number(localStorage.getItem('tanach_chapter')) || 1);
-  const [verse,     setVerse]     = useState(() => Number(localStorage.getItem('tanach_verse'))   || 1);
+  const [book,      setBook]      = useState(() => storageGet('tanach_book', 'Genesis'));
+  const [chapter,   setChapter]   = useState(() => storageGetInt('tanach_chapter', 1));
+  const [verse,     setVerse]     = useState(() => storageGetInt('tanach_verse', 1));
   const [isDark,    setIsDark]    = useState(() => {
-    const saved = localStorage.getItem('tanach_dark') === 'true';
+    const saved = storageGetBool('tanach_dark', false);
     // Apply synchronously before first paint — prevents FOUC / black flash
     document.documentElement.classList.toggle('dark', saved);
     return saved;
@@ -34,14 +35,14 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   // ── Persist position to localStorage ─────────────────────────────────────
-  useEffect(() => { localStorage.setItem('tanach_book',    book);           }, [book]);
-  useEffect(() => { localStorage.setItem('tanach_chapter', String(chapter)); }, [chapter]);
-  useEffect(() => { localStorage.setItem('tanach_verse',   String(verse));   }, [verse]);
+  useEffect(() => { storageSet('tanach_book',    book);           }, [book]);
+  useEffect(() => { storageSet('tanach_chapter', String(chapter)); }, [chapter]);
+  useEffect(() => { storageSet('tanach_verse',   String(verse));   }, [verse]);
 
   // ── Dark mode (persisted) ────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
-    localStorage.setItem('tanach_dark', String(isDark));
+    storageSet('tanach_dark', String(isDark));
   }, [isDark]);
 
   // ── Book structure ────────────────────────────────────────────────────────
@@ -181,9 +182,9 @@ export default function Home() {
 
   // ── Home reset ────────────────────────────────────────────────────────────
   const goHome = useCallback(() => {
-    localStorage.removeItem('tanach_book');
-    localStorage.removeItem('tanach_chapter');
-    localStorage.removeItem('tanach_verse');
+    storageRemove('tanach_book');
+    storageRemove('tanach_chapter');
+    storageRemove('tanach_verse');
     setBook('Genesis');
     setChapter(1);
     setVerse(1);
