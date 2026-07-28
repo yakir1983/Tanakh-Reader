@@ -18,6 +18,20 @@ export async function fetchVerseTranslation(
   return data.translation as string;
 }
 
+export async function fetchPsalmExplanation(
+  psalmNumber: number,
+  psalmText: string,
+): Promise<string> {
+  const res = await fetch('/api/ai/explain-psalm', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ psalmNumber, psalmText }),
+  });
+  if (!res.ok) throw new Error(`Psalm explanation failed: ${res.status}`);
+  const data = await res.json();
+  return data.explanation as string;
+}
+
 export async function fetchVerseExplanation(
   book: string,
   chapter: number,

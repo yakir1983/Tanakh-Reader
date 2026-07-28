@@ -397,4 +397,48 @@ router.post("/ai/explain-verse", async (req, res) => {
   }
 });
 
+// ── POST /api/ai/explain-psalm ──────────────────────────────────────────────
+// Called for Tikkun HaKlali: explains an entire psalm chapter.
+const PSALM_EXPLAIN_PROMPT = `אתה מסביר מזמורי תהילים בשפה עברית תקנית, זורמת ופשוטה — בנאמנות מלאה לרוח חז"ל והמפרשים.
+המזמור שיוצג בפניך הוא אחד מעשרת מזמורי התיקון הכללי שגילה רבי נחמן מברסלב.
+כתוב 3–4 משפטים שמסבירים:
+- מה עיקר תוכנו ורוחו של המזמור
+- מה הכוח הרוחני הטמון בו לפי המסורת
+- מה המלך דוד מבקש או מביע בו
+
+עקרון יסוד — עומק ולא שטח:
+- אל תסתפק בתיאור טכני. חובה לגעת במשמעות הפנימית ובכוח הרוחני.
+- כתוב עברית מודרנית תקנית בלבד, ללא מילים עתיקות.
+- משפטים קצרים וישירים, ללא קישוטי סגנון.
+החזר רק את ההסבר, ללא כותרת ולא הקדמה.`;
+
+router.post("/ai/explain-psalm", async (req, res) => {
+  const { psalmNumber, psalmText } = req.body as {
+    psalmNumber?: number;
+    psalmText: string;
+  };
+
+  if (!psalmText || typeof psalmText !== "string") {
+    res.status(400).json({ error: "psalmText required" });
+    return;
+  }
+
+  try {
+    const cleaned = cleanVerseText(psalmText);
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.6-terra",
+      max_completion_tokens: 400,
+      messages: [
+        { role: "system", content: PSALM_EXPLAIN_PROMPT },
+        { role: "user",   content: `תהילים פרק ${psalmNumber || ""}:\n${cleaned}` },
+      ],
+    });
+    const explanation = (completion.choices[0]?.message?.content ?? "").trim();
+    res.json({ explanation: explanation || "לא הצלחתי להסביר את המזמור." });
+  } catch (err) {
+    console.error("Explain-psalm error:", err);
+    res.status(500).json({ error: "Explanation failed" });
+  }
+});
+
 export default router;

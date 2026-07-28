@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Moon, Sun, ChevronRight, ChevronLeft, AlertCircle, Home as HomeIcon } from 'lucide-react';
 import { useGestures } from '@/hooks/use-gestures';
 import { NavigationBar } from '@/components/navigation-bar';
@@ -19,6 +20,7 @@ const FONT_SIZE_STEP    = 0.5;
 const FONT_SIZE_DEFAULT = 5;
 
 export default function Home() {
+  const [, navigate] = useLocation();
   const [book,      setBook]      = useState(() => storageGet('tanach_book', 'Genesis'));
   const [chapter,   setChapter]   = useState(() => storageGetInt('tanach_chapter', 1));
   const [verse,     setVerse]     = useState(() => storageGetInt('tanach_verse', 1));
@@ -211,6 +213,17 @@ export default function Home() {
       ref={gestureRef}
       className="relative min-h-[100dvh] w-full bg-background text-foreground transition-colors duration-300"
     >
+      {/* ── התיקון הכללי — פינה שמאלית עליונה ─────────────────────── */}
+      <button
+        onClick={() => navigate('/tikkun')}
+        dir="rtl"
+        className="fixed top-2 left-3 z-50 px-3 py-1.5 rounded-full border border-primary/35 bg-card/90 backdrop-blur-sm text-primary text-sm font-medium hover:bg-primary/10 hover:border-primary transition-all shadow-sm select-none"
+        style={{ fontFamily: 'Frank Ruhl Libre, serif' }}
+        aria-label="פתח את התיקון הכללי"
+      >
+        התיקון הכללי
+      </button>
+
       {/* ── בס"ד — פינה ימנית עליונה ────────────────────────────────── */}
       <span
         dir="rtl"
