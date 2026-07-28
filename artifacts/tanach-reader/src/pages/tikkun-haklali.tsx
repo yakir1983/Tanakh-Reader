@@ -8,18 +8,12 @@ import { AramaicTranslation } from '@/components/aramaic-translation';
 import { toHebrewNumeral } from '@/lib/hebrew-numerals';
 import { storageGet, storageSet } from '@/lib/safe-storage';
 
-// ── Font-size constants (psalm verses — controlled by header א↓/א↑) ────────
-const PSALM_FONT_DEFAULT = 1.4;
-const PSALM_FONT_MIN     = 1.0;
-const PSALM_FONT_MAX     = 2.2;
-const PSALM_FONT_STEP    = 0.15;
-const PSALM_FONT_KEY     = 'tikkun_psalm_font_size';
-
-// ── Font-size constants (prayer sections — each box has own controls) ──────
-const PRAYER_FONT_DEFAULT = 1.15;
-const PRAYER_FONT_MIN     = 0.9;
-const PRAYER_FONT_MAX     = 1.8;
-const PRAYER_FONT_STEP    = 0.15;
+// ── Font-size constants — identical to the Tanach reader ──────────────────
+const FONT_SIZE_MIN     = 2.5;
+const FONT_SIZE_MAX     = 8;
+const FONT_SIZE_STEP    = 0.5;
+const FONT_SIZE_DEFAULT = 5;
+const FONT_SIZE_KEY     = 'tikkun_font_size';
 
 // ── עשרת מזמורי התיקון הכללי ─────────────────────────────────────────────
 const TIKKUN_PSALMS = [
@@ -56,37 +50,14 @@ function PrayerSection({
   title,
   paragraphs,
   defaultOpen = true,
-  storageKey,
+  fontSize,
 }: {
   title: string;
   paragraphs: string[];
   defaultOpen?: boolean;
-  storageKey?: string;
+  fontSize: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-
-  const [fontSize, setFontSizeState] = useState<number>(() => {
-    if (!storageKey) return PRAYER_FONT_DEFAULT;
-    const saved = parseFloat(storageGet(storageKey, String(PRAYER_FONT_DEFAULT)));
-    return Number.isFinite(saved) && saved >= PRAYER_FONT_MIN && saved <= PRAYER_FONT_MAX
-      ? saved
-      : PRAYER_FONT_DEFAULT;
-  });
-
-  useEffect(() => {
-    if (storageKey) storageSet(storageKey, String(fontSize));
-  }, [storageKey, fontSize]);
-
-  const decrease = () => setFontSizeState(f => Math.max(+(f - PRAYER_FONT_STEP).toFixed(2), PRAYER_FONT_MIN));
-  const increase = () => setFontSizeState(f => Math.min(+(f + PRAYER_FONT_STEP).toFixed(2), PRAYER_FONT_MAX));
-
-  // Shared small-button style (matches Rashi/AramaicTranslation boxes)
-  const btn = (dis: boolean) =>
-    `w-6 h-6 flex items-center justify-center rounded-md border transition-colors text-sm leading-none select-none ${
-      dis
-        ? 'border-border/30 text-muted-foreground/30 cursor-not-allowed bg-card/40'
-        : 'border-border bg-background/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground'
-    }`;
 
   return (
     <div
@@ -97,36 +68,30 @@ function PrayerSection({
       }}
       dir="rtl"
     >
-      {/* Title bar — collapse toggle on the right, font controls on the left */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-primary/10">
-        <div className="flex items-center gap-1" dir="ltr">
-          <button onClick={decrease} disabled={fontSize <= PRAYER_FONT_MIN} className={btn(fontSize <= PRAYER_FONT_MIN)} aria-label="הקטן גופן">−</button>
-          <button onClick={increase} disabled={fontSize >= PRAYER_FONT_MAX} className={btn(fontSize >= PRAYER_FONT_MAX)} aria-label="הגדל גופן">+</button>
-        </div>
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-2 hover:opacity-75 transition-opacity"
-        >
-          <span className="text-base font-bold text-primary" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>
-            {title}
-          </span>
-          {open
-            ? <ChevronUp   className="w-4 h-4 text-primary/60 shrink-0" />
-            : <ChevronDown className="w-4 h-4 text-primary/60 shrink-0" />}
-        </button>
-      </div>
+      {/* Title bar */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-primary/5 transition-colors"
+      >
+        <span className="text-base font-bold text-primary" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>
+          {title}
+        </span>
+        {open
+          ? <ChevronUp   className="w-4 h-4 text-primary/60 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-primary/60 shrink-0" />}
+      </button>
 
       {/* Collapsible body */}
       {open && (
-        <div className="px-5 pb-5 space-y-4">
+        <div className="px-5 pb-5 space-y-4 border-t border-primary/10">
           {paragraphs.map((p, i) => (
             <p
               key={i}
-              className="text-foreground leading-loose text-right"
+              className="text-foreground text-right"
               style={{
                 fontFamily: 'Frank Ruhl Libre, serif',
                 fontSize: `${fontSize}rem`,
-                lineHeight: '2.1',
+                lineHeight: '1.9',
                 marginTop: i === 0 ? '1rem' : undefined,
               }}
             >
@@ -147,13 +112,11 @@ const NAV_BTN = [
   'disabled:opacity-20 disabled:cursor-not-allowed active:scale-95',
 ].join(' ');
 
-// ── Font-size control button style ────────────────────────────────────────
-const fontBtn = (disabled: boolean) => [
-  'flex items-center justify-center w-8 h-8 rounded-lg border transition-all select-none',
-  'font-bold text-sm',
-  disabled
-    ? 'border-border/30 text-muted-foreground/30 cursor-not-allowed bg-card/40'
-    : 'border-primary/30 text-primary bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95',
+// ── Control button style — identical pill shape to the Tanach reader ───────
+const ctrlBtn = () => [
+  'flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm transition-colors',
+  'border-border bg-card text-foreground hover:bg-accent/60',
+  'disabled:opacity-30 disabled:cursor-not-allowed',
 ].join(' ');
 
 // ── Main page ─────────────────────────────────────────────────────────────
@@ -161,17 +124,15 @@ export default function TikkunHaklali() {
   const [idx, setIdx] = useState(0);
   const [, navigate]  = useLocation();
 
-  // ── Psalm verse font size — controlled by header א↓/א↑ ─────────────────
-  const [psalmFontSize, setPsalmFontSize] = useState<number>(() => {
-    const saved = parseFloat(storageGet(PSALM_FONT_KEY, String(PSALM_FONT_DEFAULT)));
-    return Number.isFinite(saved) && saved >= PSALM_FONT_MIN && saved <= PSALM_FONT_MAX
+  // ── Shared font size for ALL text (psalms, prayers, explanation) ─────────
+  // Identical mechanism to the Tanach reader; persisted to localStorage.
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = parseFloat(storageGet(FONT_SIZE_KEY, String(FONT_SIZE_DEFAULT)));
+    return Number.isFinite(saved) && saved >= FONT_SIZE_MIN && saved <= FONT_SIZE_MAX
       ? saved
-      : PSALM_FONT_DEFAULT;
+      : FONT_SIZE_DEFAULT;
   });
-  useEffect(() => { storageSet(PSALM_FONT_KEY, String(psalmFontSize)); }, [psalmFontSize]);
-
-  const decreaseFont = () => setPsalmFontSize(f => Math.max(+(f - PSALM_FONT_STEP).toFixed(2), PSALM_FONT_MIN));
-  const increaseFont = () => setPsalmFontSize(f => Math.min(+(f + PSALM_FONT_STEP).toFixed(2), PSALM_FONT_MAX));
+  useEffect(() => { storageSet(FONT_SIZE_KEY, String(fontSize)); }, [fontSize]);
 
   const psalm = TIKKUN_PSALMS[idx];
 
@@ -230,28 +191,23 @@ export default function TikkunHaklali() {
             עשרת המזמורים שגילה רבי נחמן מברסלב
           </p>
 
-          {/* ── Psalm font-size controls (א↓ / א↑) — מזמורים בלבד ──────── */}
-          <div className="flex items-center justify-center gap-2 pt-1" dir="ltr">
+          {/* ── Font-size controls — identical to Tanach reader ─────────── */}
+          <div className="flex items-center justify-center gap-2 pt-3 flex-wrap">
             <button
-              onClick={decreaseFont}
-              disabled={psalmFontSize <= PSALM_FONT_MIN}
-              className={fontBtn(psalmFontSize <= PSALM_FONT_MIN)}
-              aria-label="הקטן גופן מזמור"
-              title="הקטן גופן מזמור"
+              onClick={() => setFontSize(f => Math.max(f - FONT_SIZE_STEP, FONT_SIZE_MIN))}
+              disabled={fontSize <= FONT_SIZE_MIN}
+              className={ctrlBtn()}
+              aria-label="הקטן גופן"
             >
-              <span style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↓</span>
             </button>
-            <span className="text-xs text-muted-foreground/60 w-12 text-center tabular-nums select-none">
-              {psalmFontSize.toFixed(2)}rem
-            </span>
             <button
-              onClick={increaseFont}
-              disabled={psalmFontSize >= PSALM_FONT_MAX}
-              className={fontBtn(psalmFontSize >= PSALM_FONT_MAX)}
-              aria-label="הגדל גופן מזמור"
-              title="הגדל גופן מזמור"
+              onClick={() => setFontSize(f => Math.min(f + FONT_SIZE_STEP, FONT_SIZE_MAX))}
+              disabled={fontSize >= FONT_SIZE_MAX}
+              className={ctrlBtn()}
+              aria-label="הגדל גופן"
             >
-              <span style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
+              <span className="text-base leading-none" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>א↑</span>
             </button>
           </div>
 
@@ -277,7 +233,7 @@ export default function TikkunHaklali() {
 
         {/* ── תפילות פתיחה (מוצגות לפני המזמור הראשון) ──────────────── */}
         {isFirst && (
-          <PrayerSection title="תפילה לפני אמירת התיקון הכללי" paragraphs={OPENING_PARAGRAPHS} storageKey="tikkun_prayer_open_font" />
+          <PrayerSection title="תפילה לפני אמירת התיקון הכללי" paragraphs={OPENING_PARAGRAPHS} fontSize={fontSize} />
         )}
 
         {/* ── Psalm title ─────────────────────────────────────────────── */}
@@ -312,7 +268,7 @@ export default function TikkunHaklali() {
                 </span>
                 <p
                   className="text-foreground leading-loose"
-                  style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${psalmFontSize}rem`, lineHeight: '2.1' }}
+                  style={{ fontFamily: 'Frank Ruhl Libre, serif', fontSize: `${fontSize}rem`, lineHeight: '2.1' }}
                 >
                   {v}
                 </p>
@@ -326,7 +282,7 @@ export default function TikkunHaklali() {
           translation={explanation}
           isLoading={loadingExplanation && psalmText.length > 0}
           kind="explanation"
-          storageKey="tikkun_explanation_font"
+          externalFontSize={fontSize}
         />
 
         {/* ── Bottom navigation ───────────────────────────────────────── */}
@@ -337,7 +293,7 @@ export default function TikkunHaklali() {
           <PrayerSection
             title="תפילה לאחר אמירת התיקון הכללי"
             paragraphs={CLOSING_PARAGRAPHS}
-            storageKey="tikkun_prayer_close_font"
+            fontSize={fontSize}
           />
         )}
 

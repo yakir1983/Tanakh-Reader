@@ -17,6 +17,8 @@ interface AramaicTranslationProps {
   kind?: BoxKind;
   /** localStorage key to persist the internal font-size choice */
   storageKey?: string;
+  /** When provided, overrides internal state and hides internal ±buttons */
+  externalFontSize?: number;
 }
 
 const KINDS: Record<BoxKind, { title: string; Icon: typeof Languages }> = {
@@ -31,21 +33,23 @@ const VIOLET = {
   title:  'hsl(270 55% 50%)',
 };
 
-export function AramaicTranslation({ translation, isLoading, kind = 'translation', storageKey }: AramaicTranslationProps) {
+export function AramaicTranslation({ translation, isLoading, kind = 'translation', storageKey, externalFontSize }: AramaicTranslationProps) {
   const { title, Icon } = KINDS[kind];
   const isExplanation = kind === 'explanation';
+  const isControlled   = externalFontSize !== undefined;
 
-  const [fontSize, setFontSizeState] = useState<number>(() => {
+  const [internalFontSize, setInternalFontSize] = useState<number>(() => {
     if (!storageKey) return EXPLAIN_BASE;
     const saved = parseFloat(storageGet(storageKey, String(EXPLAIN_BASE)));
     return Number.isFinite(saved) && saved >= EXPLAIN_BASE && saved <= EXPLAIN_MAX ? saved : EXPLAIN_BASE;
   });
 
   useEffect(() => {
-    if (storageKey) storageSet(storageKey, String(fontSize));
-  }, [storageKey, fontSize]);
+    if (storageKey && !isControlled) storageSet(storageKey, String(internalFontSize));
+  }, [storageKey, isControlled, internalFontSize]);
 
-  const setFontSize = (updater: (prev: number) => number) => setFontSizeState(updater);
+  const fontSize    = isControlled ? externalFontSize : internalFontSize;
+  const showButtons = isExplanation && !isControlled;
 
   if (isLoading) {
     return (
@@ -82,17 +86,17 @@ export function AramaicTranslation({ translation, isLoading, kind = 'translation
             <Icon className="w-4 h-4 flex-shrink-0" style={{ color: VIOLET.icon }} />
             <h3 className="text-base font-bold" style={{ color: VIOLET.title }}>{title}</h3>
           </div>
-          {isExplanation && (
+          {showButtons && (
             <div className="flex items-center gap-1" dir="ltr">
               <button
-                onClick={() => setFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
-                disabled={fontSize <= EXPLAIN_BASE}
+                onClick={() => setInternalFontSize(f => Math.max(+(f - EXPLAIN_STEP).toFixed(2), EXPLAIN_BASE))}
+                disabled={internalFontSize <= EXPLAIN_BASE}
                 aria-label="הקטן גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >−</button>
               <button
-                onClick={() => setFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
-                disabled={fontSize >= EXPLAIN_MAX}
+                onClick={() => setInternalFontSize(f => Math.min(+(f + EXPLAIN_STEP).toFixed(2), EXPLAIN_MAX))}
+                disabled={internalFontSize >= EXPLAIN_MAX}
                 aria-label="הגדל גופן"
                 className="w-6 h-6 flex items-center justify-center rounded-md border border-border bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none"
               >+</button>
