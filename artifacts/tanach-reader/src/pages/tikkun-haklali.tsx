@@ -45,19 +45,36 @@ const CLOSING_PARAGRAPHS = [
   `רִבּוֹנוֹ שֶׁל עוֹלָם, עִלַּת הָעִלּוֹת וְסִבַּת כָּל הַסִּבּוֹת, אַנְתְּ לְעֵלָּא, לְעֵלָּא מִן כֹּלָּא, וְלֵית לְעֵלָּא מִינָּךְ, דְּלֵית מַחֲשָׁבָה תְּפִיסָא בָּךְ כְּלָל. וּלְךָ – דוּמִיָּה תְהִלָּה; וּמְרוֹמָם עַל כָּל בְּרָכָה וּתְהִלָּה. אוֹתְךָ אֶדְרֹשׁ, אוֹתְךָ אֲבַקֵּשׁ, שֶׁתַּחְתּוֹר חֲתִירָה דֶּרֶךְ כְּבוּשָׁה מֵאִתְּךָ, דֶּרֶךְ כָּל הָעוֹלָמוֹת עַד הַהִשְׁתַּלְשְׁלוּת שֶׁלִּי, בַּמָּקוֹם שֶׁאֲנִי עוֹמֵד, כְּפִי אֲשֶׁר נִגְלָה לְךָ, יוֹדֵעַ תַּעֲלוּמוֹת. וּבַדֶּרֶךְ וְנָתִיב הַזֶּה תָּאִיר עָלַי אוֹרְךָ, לְהַחֲזִירֵנִי בִּתְשׁוּבָה שְׁלֵמָה לְפָנֶיךָ בֶּאֱמֶת, כְּפִי רְצוֹנְךָ בֶּאֱמֶת; כְּפִי רְצוֹן מִבְחַר הַבְּרוּאִים: לְבִלְתִּי לַחֲשֹׁב בְּמַחֲשַׁבְתִּי שׁוּם מַחֲשֶׁבֶת חוּץ וְשׁוּם מַחֲשָׁבָה וּבִלְבּוּל שֶׁהוּא נֶגֶד רְצוֹנְךָ. רַק לִדְבֹּק בְּמַחֲשָׁבוֹת זַכּוֹת, צָחוֹת וּקְדוֹשׁוֹת בַּעֲבוֹדָתְךָ בֶּאֱמֶת, בְּהַשָּׂגָתְךָ וּבְתוֹרָתֶךָ. הַט לִבִּי אֶל עֵדְוֹתֶיךָ, וְתֶן לִי לֵב טָהוֹר לְעָבְדְּךָ בֶּאֱמֶת. וּמִמְּצוּלוֹת יָם תּוֹצִיאֵנִי לְאוֹר גָּדוֹל חִישׁ קַל מַהֵרָה, תְּשׁוּעַת אֲדֹנָי כְּהֶרֶף עָיִן, לָאוֹר בְּאוֹר הַחַיִּים, כָּל יָמַי לִהְיוֹתִי עַל פְּנֵי הָאֲדָמָה; וְאֶזְכֶּה לְחַדֵּשׁ נְעוּרַי, הַיָּמִים שֶׁעָבְרוּ בַּחֹשֶׁךְ לְהַחֲזִירָם אֶל הַקְּדוּשָּׁה. וְתִהְיֶה יְצִיאָתִי מִן הָעוֹלָם כְּבִיאָתִי: בְּלֹא חֵטְא. וְאֶזְכֶּה לַחֲזוֹת בְּנֹעַם אֲדֹנָי וּלְבַקֵּר בְּהֵיכָלוֹ, כֻּלּוֹ אוֹמֵר כָּבוֹד. אָמֵן נֶצַח סֶלָה וָעֶד.`,
 ];
 
+// ── Font-size constants for prayer/explanation boxes — same as AramaicTranslation ──
+const BOX_FONT_BASE = 1.2;
+const BOX_FONT_STEP = 0.15;
+const BOX_FONT_MAX  = 1.2 + 3 * 0.15; // 1.65rem
+
+// ── Shared small ± button style (matches AramaicTranslation internal buttons) ──
+const smallFontBtn =
+  'w-6 h-6 flex items-center justify-center rounded-md border border-border ' +
+  'bg-card/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground ' +
+  'disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-sm leading-none select-none';
+
 // ── PrayerSection component ───────────────────────────────────────────────
 function PrayerSection({
   title,
   paragraphs,
   defaultOpen = true,
-  fontSize,
+  storageKey,
 }: {
   title: string;
   paragraphs: string[];
   defaultOpen?: boolean;
-  fontSize: number;
+  storageKey: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = parseFloat(storageGet(storageKey, String(BOX_FONT_BASE)));
+    return Number.isFinite(saved) && saved >= BOX_FONT_BASE && saved <= BOX_FONT_MAX
+      ? saved : BOX_FONT_BASE;
+  });
+  useEffect(() => { storageSet(storageKey, String(fontSize)); }, [storageKey, fontSize]);
 
   return (
     <div
@@ -69,21 +86,38 @@ function PrayerSection({
       dir="rtl"
     >
       {/* Title bar */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-3 hover:bg-primary/5 transition-colors"
-      >
-        <span className="text-base font-bold text-primary" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>
-          {title}
-        </span>
-        {open
-          ? <ChevronUp   className="w-4 h-4 text-primary/60 shrink-0" />
-          : <ChevronDown className="w-4 h-4 text-primary/60 shrink-0" />}
-      </button>
+      <div className="flex items-center justify-between px-5 py-3 border-b border-primary/10">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-2 hover:text-primary transition-colors flex-1 text-right"
+        >
+          <span className="text-base font-bold text-primary" style={{ fontFamily: 'Frank Ruhl Libre, serif' }}>
+            {title}
+          </span>
+          {open
+            ? <ChevronUp   className="w-4 h-4 text-primary/60 shrink-0" />
+            : <ChevronDown className="w-4 h-4 text-primary/60 shrink-0" />}
+        </button>
+        {/* Font-size ± buttons — always visible, same style as AramaicTranslation */}
+        <div className="flex items-center gap-1 mr-3" dir="ltr">
+          <button
+            onClick={() => setFontSize(f => Math.max(+(f - BOX_FONT_STEP).toFixed(2), BOX_FONT_BASE))}
+            disabled={fontSize <= BOX_FONT_BASE}
+            aria-label="הקטן גופן תפילה"
+            className={smallFontBtn}
+          >−</button>
+          <button
+            onClick={() => setFontSize(f => Math.min(+(f + BOX_FONT_STEP).toFixed(2), BOX_FONT_MAX))}
+            disabled={fontSize >= BOX_FONT_MAX}
+            aria-label="הגדל גופן תפילה"
+            className={smallFontBtn}
+          >+</button>
+        </div>
+      </div>
 
       {/* Collapsible body */}
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-primary/10">
+        <div className="px-5 pb-5 space-y-4">
           {paragraphs.map((p, i) => (
             <p
               key={i}
@@ -233,7 +267,7 @@ export default function TikkunHaklali() {
 
         {/* ── תפילות פתיחה (מוצגות לפני המזמור הראשון) ──────────────── */}
         {isFirst && (
-          <PrayerSection title="תפילה לפני אמירת התיקון הכללי" paragraphs={OPENING_PARAGRAPHS} fontSize={fontSize} />
+          <PrayerSection title="תפילה לפני אמירת התיקון הכללי" paragraphs={OPENING_PARAGRAPHS} storageKey="tikkun_prayer_open_font" />
         )}
 
         {/* ── Psalm title ─────────────────────────────────────────────── */}
@@ -282,7 +316,7 @@ export default function TikkunHaklali() {
           translation={explanation}
           isLoading={loadingExplanation && psalmText.length > 0}
           kind="explanation"
-          externalFontSize={fontSize}
+          storageKey="tikkun_explanation_font"
         />
 
         {/* ── Bottom navigation ───────────────────────────────────────── */}
@@ -293,7 +327,7 @@ export default function TikkunHaklali() {
           <PrayerSection
             title="תפילה לאחר אמירת התיקון הכללי"
             paragraphs={CLOSING_PARAGRAPHS}
-            fontSize={fontSize}
+            storageKey="tikkun_prayer_close_font"
           />
         )}
 
