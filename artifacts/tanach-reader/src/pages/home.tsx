@@ -345,6 +345,18 @@ export default function Home() {
           fontSize={fontSize}
         />
 
+        {/* ── Prev / Next (above Rashi) ────────────────────────────── */}
+        <div className="flex items-center justify-center gap-4" dir="rtl">
+          <button onClick={goPrev} disabled={isAtStart}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-primary/40 bg-card text-primary font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed active:scale-95">
+            <ChevronRight className="w-5 h-5" /><span>פסוק קודם</span>
+          </button>
+          <button onClick={goNext} disabled={isAtEnd}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-primary/40 bg-card text-primary font-semibold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed active:scale-95">
+            <span>פסוק הבא</span><ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* ── Rashi ───────────────────────────────────────────────── */}
         <RashiCommentary
           segments={rashiSegments ?? []}
