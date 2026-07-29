@@ -41,7 +41,7 @@ export function SplashScreen({ onDone, duration = 2200 }: SplashScreenProps) {
         style={{
           width: '110px',
           height: '110px',
-          borderRadius: '24px',
+          borderRadius: '50%',
           boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
           transform: phase === 'in' ? 'scale(0.85)' : 'scale(1)',
           transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
@@ -72,7 +72,7 @@ export function SplashScreen({ onDone, duration = 2200 }: SplashScreenProps) {
             letterSpacing: '0.05em',
           }}
         >
-          מאופשר בבינה מלאכותית
+          עם בינה מלאכותית
         </div>
       </div>
 
