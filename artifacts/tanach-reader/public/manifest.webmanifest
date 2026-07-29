@@ -10,7 +10,8 @@
   "dir": "rtl",
   "lang": "he",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#1086C0",
+  "categories": ["education", "books", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -22,13 +23,35 @@
       "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     },
     {
       "src": "/favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.jpg",
+      "type": "image/jpeg",
+      "sizes": "390x844",
+      "label": "קורא תנ\"ך ורש\"י — תצוגה בנייד",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.jpg",
+      "type": "image/jpeg",
+      "sizes": "1280x800",
+      "label": "קורא תנ\"ך ורש\"י — תצוגה בדסקטופ",
+      "form_factor": "wide"
     }
   ]
 }
