@@ -1,0 +1,22 @@
+{
+  "name": "קורא תנ\"ך ורש\"י AI",
+  "short_name": "קורא תנ\"ך",
+  "description": "קורא תנ\"ך ורש\"י מתקדם עם יכולות בינה מלאכותית",
+  "id": "/",
+  "scope": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "he",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

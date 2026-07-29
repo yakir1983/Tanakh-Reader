@@ -1,0 +1,27 @@
+{
+  "background_color": "#ffffff",
+  "description": "קורא תנך ורשי מתקדם עם יכולות בינה מלאכותית",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "קורא תנך ורשי AI",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "קורא תנך ורשי AI",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://c8b7426d-a4bc-431e-9323-18a58d2d583e-00-2ghpcda1vz72a.sisko.replit.dev/favicon.svg",
+      "type": "image/svg+xml",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "קורא תנך ורשי מתקדם עם יכולות בינה מלאכותית"
+}
