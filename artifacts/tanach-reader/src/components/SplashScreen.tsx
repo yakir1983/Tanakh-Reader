@@ -5,7 +5,7 @@ interface SplashScreenProps {
   duration?: number; // ms
 }
 
-export function SplashScreen({ onDone, duration = 2200 }: SplashScreenProps) {
+export function SplashScreen({ onDone, duration = 4500 }: SplashScreenProps) {
   const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
 
   useEffect(() => {
@@ -34,19 +34,31 @@ export function SplashScreen({ onDone, duration = 2200 }: SplashScreenProps) {
         transition: phase === 'in' ? 'opacity 0.4s ease-in' : 'opacity 0.4s ease-out',
       }}
     >
-      {/* Logo */}
-      <img
-        src="/icon-192.png"
-        alt="לוגו"
+      {/* Logo inside glowing circle */}
+      <div
         style={{
-          width: '150px',
-          height: '150px',
+          width: '210px',
+          height: '210px',
           borderRadius: '50%',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+          boxShadow: '0 0 0 6px rgba(255,255,255,0.25), 0 8px 40px rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(255,255,255,0.08)',
           transform: phase === 'in' ? 'scale(0.85)' : 'scale(1)',
           transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
         }}
-      />
+      >
+        <img
+          src="/icon-192.png"
+          alt="לוגו"
+          style={{
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+          }}
+        />
+      </div>
 
       {/* App title */}
       <div style={{ textAlign: 'center', direction: 'rtl' }}>
