@@ -2,21 +2,27 @@ import { useEffect, useState } from 'react';
 
 interface SplashScreenProps {
   onDone: () => void;
-  duration?: number; // ms
 }
 
-export function SplashScreen({ onDone, duration = 4500 }: SplashScreenProps) {
-  const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
+// Total: 4 seconds
+// 0–2s  → static hold (circle at rest)
+// 2–4s  → circle grows smoothly
+// 3.6s  → fade-out starts (0.4s)
+// 4s    → done
+const HOLD_MS  = 2000;
+const TOTAL_MS = 4000;
+const FADE_MS  = 400;
+
+export function SplashScreen({ onDone }: SplashScreenProps) {
+  const [circleGrow, setCircleGrow] = useState(false);
+  const [fadeOut,    setFadeOut]    = useState(false);
 
   useEffect(() => {
-    // fade-in: 400ms → hold → fade-out: 400ms
-    const holdTimer = setTimeout(() => setPhase('out'), duration - 400);
-    const doneTimer = setTimeout(onDone, duration);
-    return () => {
-      clearTimeout(holdTimer);
-      clearTimeout(doneTimer);
-    };
-  }, [onDone, duration]);
+    const t1 = setTimeout(() => setCircleGrow(true),  HOLD_MS);
+    const t2 = setTimeout(() => setFadeOut(true),      TOTAL_MS - FADE_MS);
+    const t3 = setTimeout(onDone,                      TOTAL_MS);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [onDone]);
 
   return (
     <div
@@ -30,37 +36,35 @@ export function SplashScreen({ onDone, duration = 4500 }: SplashScreenProps) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '28px',
-        opacity: phase === 'out' ? 0 : 1,
-        transition: phase === 'in' ? 'opacity 0.4s ease-in' : 'opacity 0.4s ease-out',
+        opacity: fadeOut ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease-out`,
       }}
     >
-      {/* Logo inside glowing circle */}
+      {/* Glowing circle — only this element grows */}
       <div
         style={{
-          width: '210px',
-          height: '210px',
+          width:  circleGrow ? '300px' : '210px',
+          height: circleGrow ? '300px' : '210px',
           borderRadius: '50%',
           boxShadow: '0 0 0 6px rgba(255,255,255,0.25), 0 8px 40px rgba(0,0,0,0.4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: 'rgba(255,255,255,0.08)',
-          transform: phase === 'in' ? 'scale(0.85)' : 'scale(1)',
-          transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+          transition: circleGrow
+            ? `width ${TOTAL_MS - HOLD_MS}ms cubic-bezier(0.25,0.46,0.45,0.94),
+               height ${TOTAL_MS - HOLD_MS}ms cubic-bezier(0.25,0.46,0.45,0.94)`
+            : 'none',
         }}
       >
         <img
           src="/icon-192.png"
           alt="לוגו"
-          style={{
-            width: '150px',
-            height: '150px',
-            borderRadius: '50%',
-          }}
+          style={{ width: '150px', height: '150px', borderRadius: '50%' }}
         />
       </div>
 
-      {/* App title */}
+      {/* App title — fixed size, no transform */}
       <div style={{ textAlign: 'center', direction: 'rtl' }}>
         <div
           style={{
@@ -88,7 +92,7 @@ export function SplashScreen({ onDone, duration = 4500 }: SplashScreenProps) {
         </div>
       </div>
 
-      {/* Subtle loading dots */}
+      {/* Loading dots */}
       <LoadingDots />
     </div>
   );
@@ -113,7 +117,7 @@ function LoadingDots() {
       <style>{`
         @keyframes splashDot {
           0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
+          40%            { transform: scale(1);   opacity: 1;   }
         }
       `}</style>
     </div>

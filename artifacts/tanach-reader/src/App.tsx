@@ -43,7 +43,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         {!splashDone && (
-          <SplashScreen onDone={handleSplashDone} duration={2200} />
+          <SplashScreen onDone={handleSplashDone} />
         )}
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Router />
