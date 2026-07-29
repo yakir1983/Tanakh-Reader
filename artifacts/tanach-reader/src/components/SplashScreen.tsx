@@ -39,8 +39,8 @@ export function SplashScreen({ onDone, duration = 2200 }: SplashScreenProps) {
         src="/icon-192.png"
         alt="לוגו"
         style={{
-          width: '110px',
-          height: '110px',
+          width: '150px',
+          height: '150px',
           borderRadius: '50%',
           boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
           transform: phase === 'in' ? 'scale(0.85)' : 'scale(1)',
