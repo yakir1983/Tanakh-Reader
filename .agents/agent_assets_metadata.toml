@@ -6,3 +6,9 @@ id = "ZRd0IUz82Q078jwuWYnQg"
 uri = "file://artifacts/tanach-reader/public/app-icon.png"
 type = "image"
 title = "app-icon.png — 512×512 PNG"
+
+[[outputs]]
+id = "VF5JPBDuQtq8VSW7wPenV"
+uri = "file://artifacts/tanach-reader/public/splash-screen.png"
+type = "image"
+title = "splash-screen.png — 390×844 PNG"
