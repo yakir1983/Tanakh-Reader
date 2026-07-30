@@ -1,0 +1,5 @@
+{
+  "buildCommand": "node ./build.mjs",
+  "installCommand": "pnpm install --ignore-scripts",
+  "framework": null
+}
