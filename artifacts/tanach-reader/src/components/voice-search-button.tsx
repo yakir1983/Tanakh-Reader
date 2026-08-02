@@ -49,6 +49,11 @@ export function VoiceSearchButton({
         body: JSON.stringify({ transcript, currentBook, currentChapter, currentVerse, currentVerseText }),
       });
 
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        setTempStatus(body.error ?? 'הגעת למכסת השאלות. נסה שוב מאוחר יותר.', 8000);
+        return;
+      }
       if (!res.ok) throw new Error(`server ${res.status}`);
       const data = await res.json() as
         | { type: 'navigate'; book: string; chapter: number; verse: number }

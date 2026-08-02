@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { aiRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
+
+// Apply rate limiting to all AI endpoints
+router.use(aiRateLimiter);
 
 // Translation request signals — checked BEFORE question signals
 const TRANSLATE_SIGNALS = [

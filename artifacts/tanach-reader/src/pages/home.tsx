@@ -78,27 +78,35 @@ export default function Home() {
 
   // ── Aramaic auto-translation ───────────────────────────────────────────────
   const needsTranslation = isAramaicVerse(book, chapter, verse);
-  const { data: aramaicTranslation, isLoading: loadingTranslation } = useQuery({
+  const { data: aramaicTranslation, isLoading: loadingTranslation, error: translationError } = useQuery({
     queryKey: ['translation', book, chapter, verse],
     queryFn:  () => fetchVerseTranslation(book, chapter, verse, verseText),
     enabled:  needsTranslation && verseText.length > 0,
     staleTime: Infinity,
+    retry: false,
   });
 
   // ── Plain-language explanation (all verses, including Aramaic) ───────────
-  const { data: verseExplanation, isLoading: loadingExplanation } = useQuery({
+  const { data: verseExplanation, isLoading: loadingExplanation, error: explanationError } = useQuery({
     queryKey: ['explanation', book, chapter, verse],
     queryFn:  () => fetchVerseExplanation(book, chapter, verse, verseText),
     enabled:  verseText.length > 0,
     staleTime: Infinity,
+    retry: false,
   });
 
   // ── Error toast helper ────────────────────────────────────────────────────
   const showNavError = useCallback((msg: string) => {
     setNavError(msg);
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-    errorTimerRef.current = setTimeout(() => setNavError(''), 5000);
+    errorTimerRef.current = setTimeout(() => setNavError(''), 8000);
   }, []);
+
+  // ── Show AI rate-limit / server errors as toast ───────────────────────────
+  useEffect(() => {
+    const err = explanationError || translationError;
+    if (err instanceof Error) showNavError(err.message);
+  }, [explanationError, translationError, showNavError]);
 
   // ── Navigation handlers (batched — one render, one query) ─────────────────
   const handleBook = useCallback((b: string) => {

@@ -1,6 +1,16 @@
 /**
  * Client-side helpers for the AI API endpoints.
+ * Extracts the Hebrew error message from 429 rate-limit responses.
  */
+
+async function handleResponse(res: Response): Promise<any> {
+  if (res.status === 429) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? 'הגעת למכסת השאלות. נסה שוב מאוחר יותר.');
+  }
+  if (!res.ok) throw new Error(`שגיאת שרת: ${res.status}`);
+  return res.json();
+}
 
 export async function fetchVerseTranslation(
   book: string,
@@ -13,8 +23,7 @@ export async function fetchVerseTranslation(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ book, chapter, verse, verseText }),
   });
-  if (!res.ok) throw new Error(`Translation request failed: ${res.status}`);
-  const data = await res.json();
+  const data = await handleResponse(res);
   return data.translation as string;
 }
 
@@ -27,8 +36,7 @@ export async function fetchPsalmExplanation(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ psalmNumber, psalmText }),
   });
-  if (!res.ok) throw new Error(`Psalm explanation failed: ${res.status}`);
-  const data = await res.json();
+  const data = await handleResponse(res);
   return data.explanation as string;
 }
 
@@ -43,7 +51,6 @@ export async function fetchVerseExplanation(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ book, chapter, verse, verseText }),
   });
-  if (!res.ok) throw new Error(`Explanation request failed: ${res.status}`);
-  const data = await res.json();
+  const data = await handleResponse(res);
   return data.explanation as string;
 }
