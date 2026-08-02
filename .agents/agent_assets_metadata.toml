@@ -12,3 +12,10 @@ id = "VF5JPBDuQtq8VSW7wPenV"
 uri = "file://artifacts/tanach-reader/public/splash-screen.png"
 type = "image"
 title = "splash-screen.png — 390×844 PNG"
+
+[[outputs]]
+id = "6uNloRh6OrqIbiLM5a8Vs"
+uri = "file://site-ready.zip"
+type = "unspecified"
+title = "site-ready.zip"
+description = "קבצי האתר המוכנים לפריסה — index.html, assets, manifest, אייקונים ו-service worker"
