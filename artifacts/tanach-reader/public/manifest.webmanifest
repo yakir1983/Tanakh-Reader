@@ -1,17 +1,49 @@
 {
   "name": "קורא תנ\"ך ורש\"י",
-  "short_name": "קורא תנ\"ך ורש\"י",
-  "description": "קורא תנ\"ך ורש\"י מתקדם עם יכולות בינה מלאכותית",
+  "short_name": "קורא תנ\"ך",
+  "description": "קראו את התנ\"ך עם פירוש רש\"י, ניווט קולי בעברית ותשובות בינה מלאכותית לכל שאלה על הפסוק.",
   "id": "/",
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
   "dir": "rtl",
   "lang": "he",
   "background_color": "#1086C0",
   "theme_color": "#1086C0",
   "categories": ["education", "books", "utilities"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "shortcuts": [
+    {
+      "name": "בראשית א:א",
+      "short_name": "בראשית",
+      "description": "פתח את בראשית פרק א פסוק א",
+      "url": "/?book=Genesis&chapter=1&verse=1&source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "תהילים א:א",
+      "short_name": "תהילים",
+      "description": "פתח את תהילים פרק א פסוק א",
+      "url": "/?book=Psalms&chapter=1&verse=1&source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "תיקון הכללי",
+      "short_name": "תיקון",
+      "description": "עשרת מזמורי התיקון הכללי",
+      "url": "/tikkun?source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icon-48.png",
@@ -68,13 +100,13 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/app-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/app-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -91,7 +123,8 @@
       "src": "/screenshot-mobile.jpg",
       "type": "image/jpeg",
       "sizes": "390x844",
-      "label": "קורא תנ\"ך ורש\"י — תצוגה בנייד",
+      "label": "קורא תנ\"ך ורש\"י — תצוגת פסוק עם פירוש רש\"י",
+      "platform": "android",
       "form_factor": "narrow"
     },
     {
@@ -99,6 +132,7 @@
       "type": "image/jpeg",
       "sizes": "1280x800",
       "label": "קורא תנ\"ך ורש\"י — תצוגה בדסקטופ",
+      "platform": "windows",
       "form_factor": "wide"
     }
   ]
