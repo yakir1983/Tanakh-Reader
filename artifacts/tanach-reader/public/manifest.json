@@ -1,0 +1,139 @@
+{
+  "name": "קורא תנ\"ך ורש\"י",
+  "short_name": "קורא תנ\"ך",
+  "description": "קראו את התנ\"ך עם פירוש רש\"י, ניווט קולי בעברית ותשובות בינה מלאכותית לכל שאלה על הפסוק.",
+  "id": "/",
+  "scope": "/",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "he",
+  "background_color": "#1086C0",
+  "theme_color": "#1086C0",
+  "categories": ["education", "books", "utilities"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "shortcuts": [
+    {
+      "name": "בראשית א:א",
+      "short_name": "בראשית",
+      "description": "פתח את בראשית פרק א פסוק א",
+      "url": "/?book=Genesis&chapter=1&verse=1&source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "תהילים א:א",
+      "short_name": "תהילים",
+      "description": "פתח את תהילים פרק א פסוק א",
+      "url": "/?book=Psalms&chapter=1&verse=1&source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "תיקון הכללי",
+      "short_name": "תיקון",
+      "description": "עשרת מזמורי התיקון הכללי",
+      "url": "/tikkun?source=shortcut",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon-48.png",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-72.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-96.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-128.png",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-144.png",
+      "type": "image/png",
+      "sizes": "144x144",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-152.png",
+      "type": "image/png",
+      "sizes": "152x152",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-256.png",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-384.png",
+      "type": "image/png",
+      "sizes": "384x384",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.jpg",
+      "type": "image/jpeg",
+      "sizes": "390x844",
+      "label": "קורא תנ\"ך ורש\"י — תצוגת פסוק עם פירוש רש\"י",
+      "platform": "android",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.jpg",
+      "type": "image/jpeg",
+      "sizes": "1280x800",
+      "label": "קורא תנ\"ך ורש\"י — תצוגה בדסקטופ",
+      "platform": "windows",
+      "form_factor": "wide"
+    }
+  ]
+}
