@@ -26,3 +26,10 @@ uri = "file://site-final.zip"
 type = "unspecified"
 title = "site-final.zip — תיקון שגיאת תקשורת"
 description = "כולל retry אוטומטי + הערת שרת + manifest.json + _redirects (1.1MB)"
+
+[[outputs]]
+id = "VHXLtFX_JajiDHK4r-Smb"
+uri = "file://site-final-api.zip"
+type = "unspecified"
+title = "site-final-api.zip — עם כתובת API מוטמעת"
+description = "VITE_API_BASE_URL מובנה בתוך ה-JS — לא צריך להגדיר משתנה סביבה בנטליפיי (1.1MB)"
