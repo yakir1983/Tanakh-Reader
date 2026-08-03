@@ -1,0 +1,16 @@
+# Netlify redirect rules
+#
+# When this app is deployed as a static site on Netlify, API calls must be
+# proxied to the live API server.
+#
+# 1. Set the environment variable VITE_API_BASE_URL in Netlify
+#    (Site settings → Environment variables) to your Replit production URL,
+#    e.g.:  https://tanakh-reader.<your-username>.replit.app
+#    Then trigger a redeploy — no _redirects proxy is needed.
+#
+# 2. Alternatively, uncomment the line below and replace the URL:
+#
+# /api/*  https://tanakh-reader.<your-username>.replit.app/api/:splat  200
+
+# SPA fallback — all other routes render index.html
+/*  /index.html  200

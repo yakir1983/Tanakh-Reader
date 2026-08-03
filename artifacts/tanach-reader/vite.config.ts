@@ -72,6 +72,13 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      // Forward /api/* to the API server in dev (port 8080 per artifact.toml)
+      '/api': {
+        target: `http://localhost:8080`,
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,
