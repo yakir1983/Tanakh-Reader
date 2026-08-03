@@ -31,5 +31,5 @@ description = "כולל retry אוטומטי + הערת שרת + manifest.json +
 id = "VHXLtFX_JajiDHK4r-Smb"
 uri = "file://site-final-api.zip"
 type = "unspecified"
-title = "site-final-api.zip — עם כתובת API מוטמעת"
-description = "VITE_API_BASE_URL מובנה בתוך ה-JS — לא צריך להגדיר משתנה סביבה בנטליפיי (1.1MB)"
+title = "site-final-api.zip — כתובת קבועה מוטמעת"
+description = "VITE_API_BASE_URL=https://tanakh-reader.replit.app מובנה בתוך ה-JS (1.1MB)"
