@@ -19,3 +19,10 @@ uri = "file://site-ready.zip"
 type = "unspecified"
 title = "site-ready.zip"
 description = "קבצי האתר המוכנים לפריסה — index.html, assets, manifest, אייקונים ו-service worker"
+
+[[outputs]]
+id = "39w1YFecZZY0n6Yng0j37"
+uri = "file://site-final.zip"
+type = "unspecified"
+title = "site-final.zip"
+description = "קבצי האתר הסופיים עם manifest.json, app-icon, service worker ו-assets מבונים"
