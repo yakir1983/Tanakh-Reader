@@ -24,5 +24,5 @@ description = "קבצי האתר המוכנים לפריסה — index.html, ass
 id = "39w1YFecZZY0n6Yng0j37"
 uri = "file://site-final.zip"
 type = "unspecified"
-title = "site-final.zip — גרסה מעודכנת לנטליפיי"
-description = "כולל תיקון 404 מיקרופון, manifest.json, _redirects, service worker ו-assets מבונים (1.2MB)"
+title = "site-final.zip — תיקון שגיאת תקשורת"
+description = "כולל retry אוטומטי + הערת שרת + manifest.json + _redirects (1.1MB)"
