@@ -2,7 +2,7 @@
  * Client-side helpers for the AI API endpoints.
  * Extracts the Hebrew error message from 429 rate-limit responses.
  */
-import { getApiBase } from './api-base';
+import { getApiBase, fetchWithRetry } from './api-base';
 
 async function handleResponse(res: Response): Promise<any> {
   if (res.status === 429) {
@@ -19,7 +19,7 @@ export async function fetchVerseTranslation(
   verse: number,
   verseText: string,
 ): Promise<string> {
-  const res = await fetch(`${getApiBase()}/api/ai/translate-verse`, {
+  const res = await fetchWithRetry(`${getApiBase()}/api/ai/translate-verse`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ book, chapter, verse, verseText }),
@@ -32,7 +32,7 @@ export async function fetchPsalmExplanation(
   psalmNumber: number,
   psalmText: string,
 ): Promise<string> {
-  const res = await fetch(`${getApiBase()}/api/ai/explain-psalm`, {
+  const res = await fetchWithRetry(`${getApiBase()}/api/ai/explain-psalm`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ psalmNumber, psalmText }),
@@ -47,7 +47,7 @@ export async function fetchVerseExplanation(
   verse: number,
   verseText: string,
 ): Promise<string> {
-  const res = await fetch(`${getApiBase()}/api/ai/explain-verse`, {
+  const res = await fetchWithRetry(`${getApiBase()}/api/ai/explain-verse`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ book, chapter, verse, verseText }),

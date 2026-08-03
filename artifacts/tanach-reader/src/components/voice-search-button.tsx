@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import type { TanachBook } from '@/lib/tanach-data';
-import { getApiBase } from '@/lib/api-base';
+import { getApiBase, fetchWithRetry } from '@/lib/api-base';
 
 interface Props {
   onReferenceDetected: (book?: TanachBook, chapter?: number, verse?: number) => void;
@@ -44,11 +44,15 @@ export function VoiceSearchButton({
     setPhase('thinking');
     setStatus('מעבד…');
     try {
-      const res = await fetch(`${getApiBase()}/api/ai/voice-command`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript, currentBook, currentChapter, currentVerse, currentVerseText }),
-      });
+      const res = await fetchWithRetry(
+        `${getApiBase()}/api/ai/voice-command`,
+        {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript, currentBook, currentChapter, currentVerse, currentVerseText }),
+        },
+        () => setStatus('מעיר שרת… נסה שוב בעוד רגע'),
+      );
 
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}));
