@@ -1,1 +1,2 @@
 - [OpenAI model behavior](openai-model-behavior.md) — gpt-5-mini for JSON extraction, gpt-5.6-terra mandatory for Hebrew Q&A; mini/nano return empty content for open-ended Hebrew.
+- [AI cache & rate limits](ai-cache-rate-limits.md) — immutable Tanach AI answers cached forever in Replit KV; voice Q&A vs browsing limits split; XFF rightmost entry; mini needs ≥600 token headroom.
