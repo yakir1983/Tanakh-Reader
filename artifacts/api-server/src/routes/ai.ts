@@ -1,11 +1,19 @@
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { aiRateLimiter } from "../middleware/rateLimiter";
+import { aiRateLimiter, browseRateLimiter } from "../middleware/rateLimiter";
+import { cacheGetOrCompute, shortHash } from "../lib/aiCache";
+
+// ── Input size limits (prevent cache/KV exhaustion and oversized AI prompts) ──
+const MAX_VERSE_TEXT_LEN  = 4000;  // longest Tanach verses are far below this
+const MAX_TRANSCRIPT_LEN  = 500;
 
 const router = Router();
 
-// Apply rate limiting to all AI endpoints
-router.use(aiRateLimiter);
+// Rate limiting strategy:
+// - Voice Q&A (/ai/voice-command): strict aiRateLimiter — 5/min, 50/day per IP.
+// - Browsing endpoints (explain/translate, fired per page flip): browseRateLimiter —
+//   60/min per IP, 10-minute automatic block on breach. Most hits are served
+//   from cache and never reach the AI.
 
 // Translation request signals — checked BEFORE question signals
 const TRANSLATE_SIGNALS = [
@@ -48,6 +56,24 @@ const BOOK_MAP_STR = `בראשית=Genesis, שמות=Exodus, ויקרא=Leviticu
 שיר השירים=Song of Songs, רות=Ruth, איכה=Lamentations,
 קהלת=Ecclesiastes, אסתר=Esther, דניאל=Daniel, עזרא=Ezra,
 נחמיה=Nehemiah, דברי הימים א=I Chronicles, דברי הימים ב=II Chronicles`;
+
+// Server-side validation of AI navigation output — only real books and sane ranges
+const VALID_BOOKS = new Set([
+  "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
+  "Joshua", "Judges", "I Samuel", "II Samuel", "I Kings", "II Kings",
+  "Isaiah", "Jeremiah", "Ezekiel", "Hosea", "Joel", "Amos", "Obadiah",
+  "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai",
+  "Zechariah", "Malachi", "Psalms", "Proverbs", "Job", "Song of Songs",
+  "Ruth", "Lamentations", "Ecclesiastes", "Esther", "Daniel", "Ezra",
+  "Nehemiah", "I Chronicles", "II Chronicles", "CURRENT",
+]);
+
+function isValidNavTarget(book: unknown, chapter: unknown, verse: unknown): boolean {
+  if (typeof book !== "string" || !VALID_BOOKS.has(book)) return false;
+  if (!Number.isInteger(chapter) || (chapter as number) < 1 || (chapter as number) > 150) return false;
+  if (!Number.isInteger(verse)   || (verse as number)   < 1 || (verse as number)   > 176) return false;
+  return true;
+}
 
 // ── Biblical character → first major appearance ────────────────────────────────
 // Entries list every common alias, honorific, misspelling, and gender form separated by " / "
@@ -390,6 +416,11 @@ Return exactly one of:
 {"found":true,"book":"<English name>","chapter":<number>,"verse":<number>}
 {"found":false}
 
+SPEED & PRECISION REQUIREMENTS:
+- Respond with the JSON object ONLY — no explanation, no markdown, no extra text.
+- Decide in one pass: check explicit reference → character map → topic map → slang map → NLP 3-step. Stop at the first confident match.
+- Never invent a book name outside the Book map. Never guess chapter numbers not grounded in the maps or verse knowledge.
+
 Rules:
 - If explicit book+chapter+verse given → use them directly.
 - If a character name or alias matches (including honorifics like "אבינו", "אמנו", "המלך", "הנביא", "הצדיק") → use character defaults.
@@ -496,7 +527,7 @@ async function translateAramaic(
 }
 
 // ── POST /api/ai/voice-command ─────────────────────────────────────────────────
-router.post("/ai/voice-command", async (req, res) => {
+router.post("/ai/voice-command", aiRateLimiter, async (req, res) => {
   const { transcript, currentBook, currentChapter, currentVerse, currentVerseText } = req.body as {
     transcript: string;
     currentBook?: string;
@@ -507,6 +538,10 @@ router.post("/ai/voice-command", async (req, res) => {
 
   if (!transcript || typeof transcript !== "string") {
     res.status(400).json({ error: "transcript required" });
+    return;
+  }
+  if (transcript.length > MAX_TRANSCRIPT_LEN) {
+    res.status(400).json({ error: "transcript too long" });
     return;
   }
 
@@ -540,9 +575,11 @@ router.post("/ai/voice-command", async (req, res) => {
 
     } else {
       // ── Navigate ─────────────────────────────────────────────────────────────
+      // gpt-5-mini: much faster for structured JSON extraction (nav parsing).
+      // Free-form Hebrew Q&A must stay on gpt-5.6-terra (mini returns empty).
       const completion = await openai.chat.completions.create({
-        model: "gpt-5.6-terra",
-        max_completion_tokens: 120,
+        model: "gpt-5-mini",
+        max_completion_tokens: 600, // reasoning model — needs headroom beyond the tiny JSON output
         messages: [
           { role: "system", content: NAV_PROMPT },
           { role: "user",   content: transcript },
@@ -554,7 +591,7 @@ router.post("/ai/voice-command", async (req, res) => {
       if (!match) { res.json({ type: "unknown" }); return; }
 
       const data = JSON.parse(match[0]);
-      if (data.found) {
+      if (data.found && isValidNavTarget(data.book, data.chapter, data.verse)) {
         res.json({ type: "navigate", book: data.book, chapter: data.chapter, verse: data.verse });
       } else {
         res.json({ type: "unknown" });
@@ -568,7 +605,7 @@ router.post("/ai/voice-command", async (req, res) => {
 
 // ── POST /api/ai/translate-verse ───────────────────────────────────────────────
 // Called automatically by the frontend when an Aramaic verse is displayed.
-router.post("/ai/translate-verse", async (req, res) => {
+router.post("/ai/translate-verse", browseRateLimiter, async (req, res) => {
   const { book, chapter, verse, verseText } = req.body as {
     book?: string;
     chapter?: number;
@@ -576,14 +613,18 @@ router.post("/ai/translate-verse", async (req, res) => {
     verseText: string;
   };
 
-  if (!verseText || typeof verseText !== "string") {
+  if (!verseText || typeof verseText !== "string" || verseText.length > MAX_VERSE_TEXT_LEN) {
     res.status(400).json({ error: "verseText required" });
     return;
   }
 
   try {
-    const translation = await translateAramaic(verseText, book, chapter, verse);
-    res.json({ translation });
+    const cacheKey = `translate:v1:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleanVerseText(verseText))}`;
+    const { value, cached } = await cacheGetOrCompute(cacheKey, async () => {
+      const t = await translateAramaic(verseText, book, chapter, verse);
+      return t === "לא הצלחתי לתרגם את הפסוק." ? "" : t;
+    });
+    res.json({ translation: value || "לא הצלחתי לתרגם את הפסוק.", cached });
   } catch (err) {
     console.error("Translation error:", err);
     res.status(500).json({ error: "Translation failed" });
@@ -613,7 +654,7 @@ const EXPLAIN_PROMPT = `אתה מסביר פסוקים מהתנ"ך בשפה עב
 - משפטים קצרים וישירים, ללא קישוטי סגנון וללא חזרות מיותרות.
 החזר רק את ההסבר, ללא כותרת ולא הקדמה.`;
 
-router.post("/ai/explain-verse", async (req, res) => {
+router.post("/ai/explain-verse", browseRateLimiter, async (req, res) => {
   const { book, chapter, verse, verseText } = req.body as {
     book?: string;
     chapter?: number;
@@ -621,23 +662,28 @@ router.post("/ai/explain-verse", async (req, res) => {
     verseText: string;
   };
 
-  if (!verseText || typeof verseText !== "string") {
+  if (!verseText || typeof verseText !== "string" || verseText.length > MAX_VERSE_TEXT_LEN) {
     res.status(400).json({ error: "verseText required" });
     return;
   }
 
   try {
     const cleaned = cleanVerseText(verseText);
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
-      max_completion_tokens: 300,
-      messages: [
-        { role: "system", content: EXPLAIN_PROMPT },
-        { role: "user",   content: `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${cleaned}` },
-      ],
+
+    // ── Cache first: identical verse → identical explanation, no AI call ──────
+    const cacheKey = `explain:v1:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleaned)}`;
+    const { value, cached } = await cacheGetOrCompute(cacheKey, async () => {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-5.6-terra",
+        max_completion_tokens: 300,
+        messages: [
+          { role: "system", content: EXPLAIN_PROMPT },
+          { role: "user",   content: `ספר ${book || ""}, פרק ${chapter || ""}, פסוק ${verse || ""}:\n${cleaned}` },
+        ],
+      });
+      return (completion.choices[0]?.message?.content ?? "").trim();
     });
-    const explanation = (completion.choices[0]?.message?.content ?? "").trim();
-    res.json({ explanation: explanation || "לא הצלחתי להסביר את הפסוק." });
+    res.json({ explanation: value || "לא הצלחתי להסביר את הפסוק.", cached });
   } catch (err) {
     console.error("Explain-verse error:", err);
     res.status(500).json({ error: "Explanation failed" });
@@ -664,29 +710,34 @@ const PSALM_EXPLAIN_PROMPT = `אתה מסביר מזמורי תהילים בשפ
 - הימנע לחלוטין מניסוחים מכפישים, גסים, או מיותרים שעלולים להישמע כחוסר כבוד.
 החזר רק את ההסבר, ללא כותרת ולא הקדמה.`;
 
-router.post("/ai/explain-psalm", async (req, res) => {
+router.post("/ai/explain-psalm", browseRateLimiter, async (req, res) => {
   const { psalmNumber, psalmText } = req.body as {
     psalmNumber?: number;
     psalmText: string;
   };
 
-  if (!psalmText || typeof psalmText !== "string") {
+  if (!psalmText || typeof psalmText !== "string" || psalmText.length > MAX_VERSE_TEXT_LEN * 4) {
     res.status(400).json({ error: "psalmText required" });
     return;
   }
 
   try {
     const cleaned = cleanVerseText(psalmText);
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
-      max_completion_tokens: 400,
-      messages: [
-        { role: "system", content: PSALM_EXPLAIN_PROMPT },
-        { role: "user",   content: `תהילים פרק ${psalmNumber || ""}:\n${cleaned}` },
-      ],
+
+    // ── Cache first ────────────────────────────────────────────────────────────
+    const cacheKey = `psalm:v1:${psalmNumber ?? 0}:${shortHash(cleaned)}`;
+    const { value, cached } = await cacheGetOrCompute(cacheKey, async () => {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-5.6-terra",
+        max_completion_tokens: 400,
+        messages: [
+          { role: "system", content: PSALM_EXPLAIN_PROMPT },
+          { role: "user",   content: `תהילים פרק ${psalmNumber || ""}:\n${cleaned}` },
+        ],
+      });
+      return (completion.choices[0]?.message?.content ?? "").trim();
     });
-    const explanation = (completion.choices[0]?.message?.content ?? "").trim();
-    res.json({ explanation: explanation || "לא הצלחתי להסביר את המזמור." });
+    res.json({ explanation: value || "לא הצלחתי להסביר את המזמור.", cached });
   } catch (err) {
     console.error("Explain-psalm error:", err);
     res.status(500).json({ error: "Explanation failed" });
