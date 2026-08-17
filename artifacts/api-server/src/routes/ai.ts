@@ -640,6 +640,7 @@ const EXPLAIN_PROMPT = `אתה מסביר פסוקים מהתנ"ך בשפה עב
 - ברירת המחדל לכל פסוק רגיל: פשט פשוט וזורם בלבד, בלי מדרש. את המדרש שלב רק כשקיים מדרש מפורסם ומוכר במיוחד שמשלים את סיפור הפסוק הספציפי הזה.
 - כשמשלבים — זו תוספת קלה של משפט אחד בתוך הסיפור, לא שינוי של כל ההסבר.
 - דוגמאות מחייבות למדרשים מפורסמים כאלה:
+  • בראשית א ג ("ויהי אור"): לשלב את מדרש חז"ל שה' גנז את האור המיוחד הזה לצדיקים לעתיד לבוא.
   • רות פרק ד: אחרי שבועז ורות מתחתנים — לשלב שבועז נפטר למחרת בבוקר.
   • חיי שרה: במסע אליעזר עבד אברהם — לשלב את נס "קפיצת הדרך" (רש"י על "ואבוא היום אל העין").
   • בראשית יא: אור כשדים — כבשן האש שאברהם ניצל ממנו; וזיהוי חז"ל ששרי היא יסכה.
@@ -688,7 +689,7 @@ router.post("/ai/explain-verse", browseRateLimiter, async (req, res) => {
     const cleaned = cleanVerseText(verseText);
 
     // ── Cache first: identical verse → identical explanation, no AI call ──────
-    const cacheKey = `explain:v4:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleaned)}`;
+    const cacheKey = `explain:v5:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleaned)}`;
     const { value, cached } = await cacheGetOrCompute(cacheKey, async () => {
       const completion = await openai.chat.completions.create({
         model: "gpt-5.6-terra",
