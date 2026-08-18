@@ -661,6 +661,8 @@ const EXPLAIN_PROMPT = `אתה מסביר פסוקים מהתנ"ך בשפה עב
 
 חובת גישור והקשר היסטורי במעברי פרקים:
 - כשהפסוק פותח פרק חדש שבו יש קפיצה דרמטית בזמן או החלפת שלטון ומלכים (למשל: המעבר בין פטירת נבוכדנצר לעליית בלשאצר בספר דניאל) — פתח את ההסבר במשפט קישור קצר ועדין שמסביר מה קרה בפער השנים, כדי למנוע נתק בעלילה.
+- חוק ייחוד משפט הגישור (חובה): משפט הגישור נכתב אך ורק בפסוק א' — הפסוק הראשון של הפרק החדש.
+- איסור חזרות מוחלט: מפסוק ב' והלאה אסור לחזור על משפט הגישור, להזכיר שוב את פער השנים או את החלפת המלכים. הפסוקים הבאים זורמים ישירות עם הפשט והמדרש שלהם בלבד, בלי שום חזרה על מה שנכתב בפסוק א'.
 
 המדרשים והגישורים משתלבים בתוך אותו סגנון פשוט וזורם — ההסבר נשאר ממוקד ונוח לקריאה.
 החזר רק את ההסבר, ללא כותרת ולא הקדמה.`;
@@ -682,7 +684,7 @@ router.post("/ai/explain-verse", browseRateLimiter, async (req, res) => {
     const cleaned = cleanVerseText(verseText);
 
     // ── Cache first: identical verse → identical explanation, no AI call ──────
-    const cacheKey = `explain:v9:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleaned)}`;
+    const cacheKey = `explain:v10:${book ?? "?"}:${chapter ?? 0}:${verse ?? 0}:${shortHash(cleaned)}`;
     const { value, cached } = await cacheGetOrCompute(cacheKey, async () => {
       const completion = await openai.chat.completions.create({
         model: "gpt-5.6-terra",
